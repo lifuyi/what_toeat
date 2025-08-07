@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>菜谱管理系统</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>菜谱管理系统</h1>
+
+        <div class="search-section">
+            <h2>搜索菜谱</h2>
+            <input type="text" id="searchInput" placeholder="请输入菜谱ID或标题">
+            <button id="searchButton">搜索</button>
+        </div>
+
+        <div class="edit-section">
+            <h2>编辑菜谱</h2>
+            <form id="editForm">
+                <div class="form-group">
+                    <label for="recipeId">菜谱ID:</label>
+                    <input type="text" id="recipeId" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label for="recipeTitle">菜谱标题:</label>
+                    <input type="text" id="recipeTitle" required>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="recipeIngredients">食材用料 (yl):</label>
+                    <textarea id="recipeIngredients" rows="4"></textarea>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="recipeInstructions">制作步骤:</label>
+                    <textarea id="recipeInstructions" rows="6"></textarea>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="recipeDesc">菜谱描述:</label>
+                    <textarea id="recipeDesc" rows="3"></textarea>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="recipeTip">制作小贴士:</label>
+                    <textarea id="recipeTip" rows="3"></textarea>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="recipeFl">食材清单 (fl):</label>
+                    <textarea id="recipeFl" rows="4"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="recipeDid">分类ID (did):</label>
+                    <input type="text" id="recipeDid">
+                </div>
+
+                <div class="form-group">
+                    <label for="recipeCid">菜系ID (cid):</label>
+                    <input type="text" id="recipeCid">
+                </div>
+
+                <div class="form-group">
+                    <label for="recipeZid">专题ID (zid):</label>
+                    <input type="text" id="recipeZid">
+                </div>
+
+                <div class="form-group">
+                    <label for="recipeDifficulty">难度等级:</label>
+                    <input type="text" id="recipeDifficulty">
+                </div>
+
+                <div class="form-group">
+                    <label for="recipeCosttime">制作时间:</label>
+                    <input type="text" id="recipeCosttime">
+                </div>
+
+                <div class="form-group">
+                    <label for="recipeGrade">评分:</label>
+                    <input type="text" id="recipeGrade">
+                </div>
+
+                <div class="form-group">
+                    <label for="recipeHealth">健康度:</label>
+                    <input type="text" id="recipeHealth">
+                </div>
+
+                <div class="form-group">
+                    <label for="recipeDifficultyScore">制作难易:</label>
+                    <input type="text" id="recipeDifficultyScore">
+                </div>
+
+                <div class="form-group">
+                    <label for="recipeSpeed">制作速度:</label>
+                    <input type="text" id="recipeSpeed">
+                </div>
+
+                <div class="form-group">
+                    <label for="recipeFavor">素食偏好:</label>
+                    <input type="text" id="recipeFavor">
+                </div>
+
+                <div class="form-group">
+                    <label for="recipeSpicy">辛辣程度:</label>
+                    <input type="text" id="recipeSpicy">
+                </div>
+
+                <div class="form-group">
+                    <label for="recipeSweet">甜度:</label>
+                    <input type="text" id="recipeSweet">
+                </div>
+
+                <div class="form-group">
+                    <label for="recipeThumb">缩略图:</label>
+                    <input type="text" id="recipeThumb">
+                </div>
+
+                <div class="form-group">
+                    <label for="recipeVideourl">视频链接:</label>
+                    <input type="text" id="recipeVideourl">
+                </div>
+
+                <div class="form-group">
+                    <label for="recipeSteppic">步骤图片:</label>
+                    <input type="text" id="recipeSteppic">
+                </div>
+
+                <div class="form-group">
+                    <label for="recipeUp">点赞数:</label>
+                    <input type="text" id="recipeUp">
+                </div>
+
+                <div class="form-group">
+                    <label for="recipeViewnum">浏览次数:</label>
+                    <input type="text" id="recipeViewnum">
+                </div>
+
+                <div class="form-group">
+                    <label for="recipeFavnum">收藏次数:</label>
+                    <input type="text" id="recipeFavnum">
+                </div>
+
+                <div class="form-group">
+                    <label for="recipeOutdate">过期时间:</label>
+                    <input type="text" id="recipeOutdate">
+                </div>
+
+                <div class="form-group">
+                    <label for="recipeStatus">状态:</label>
+                    <input type="text" id="recipeStatus">
+                </div>
+
+                <button type="submit" id="saveButton">保存修改</button>
+            </form>
+            <div id="message" class="hidden"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

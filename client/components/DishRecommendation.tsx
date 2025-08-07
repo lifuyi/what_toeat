@@ -1,0 +1,344 @@
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { DishCard } from './DishCard';
+import { DishDetailDialog } from './DishDetailDialog';
+import { Preferences } from './RadarController';
+import { getRecommendedRecipes, convertRecipeToDish, type Recipe } from '../services/api';
+
+export interface Dish {
+  id: string;
+  name: string;
+  description: string;
+  ingredients: string[];
+  steps: string[];
+  cookingTime: string;
+  difficulty: string;
+  tags: string[];
+  category?: string;
+  scores: {
+    healthy: number;
+    simple: number;
+    difficulty: number;
+    quick: number;
+    vegetarian: number;
+    spicy: number;
+  };
+}
+
+const mockDishes: Dish[] = [
+  {
+    id: '1',
+    name: '番茄鸡蛋面',
+    description: '简单快手的家常面条，营养丰富',
+    ingredients: ['鸡蛋 2个', '番茄 2个', '面条 200g', '葱花 适量', '盐 适量', '糖 少许'],
+    steps: [
+      '鸡蛋打散炒熟盛起备用',
+      '番茄切块下锅炒出汁水',
+      '加入炒蛋和调料炒匀',
+      '煮面条至八分熟',
+      '面条加入番茄鸡蛋中拌匀即可'
+    ],
+    cookingTime: '15分钟',
+    difficulty: '简单',
+    tags: ['家常', '快手', '营养'],
+    category: '快手菜',
+    scores: { healthy: 8, simple: 9, difficulty: 2, quick: 9, vegetarian: 7, spicy: 1 }
+  },
+  {
+    id: '2',
+    name: '宫保鸡丁',
+    description: '经典川菜，香辣下饭',
+    ingredients: ['鸡胸肉 300g', '花生米 50g', '干辣椒 适量', '花椒 适量', '葱 1根', '姜蒜 适量'],
+    steps: [
+      '鸡肉切丁腌制15分钟',
+      '热锅炸花生米盛起',
+      '鸡丁下锅炒至变色',
+      '加入调料和干辣椒炒香',
+      '最后放入花生米炒匀即可'
+    ],
+    cookingTime: '25分钟',
+    difficulty: '中等',
+    tags: ['川菜', '辣', '下饭'],
+    category: '川菜',
+    scores: { healthy: 6, simple: 5, difficulty: 6, quick: 6, vegetarian: 2, spicy: 8 }
+  },
+  {
+    id: '3',
+    name: '清蒸鲈鱼',
+    description: '清淡鲜美，营养健康',
+    ingredients: ['鲈鱼 1条', '生姜 3片', '葱 2根', '料酒 适量', '生抽 2勺', '蒸鱼豉油 2勺'],
+    steps: [
+      '鲈鱼处理干净，鱼身划几刀',
+      '放入姜片和料酒腌制10分钟',
+      '上蒸锅蒸8-10分钟',
+      '取出倒掉水分，放上葱丝',
+      '淋上蒸鱼豉油，浇热油即可'
+    ],
+    cookingTime: '20分钟',
+    difficulty: '简单',
+    tags: ['清淡', '健康', '蒸菜'],
+    category: '健康菜品',
+    scores: { healthy: 9, simple: 7, difficulty: 3, quick: 7, vegetarian: 1, spicy: 0 }
+  },
+  {
+    id: '4',
+    name: '麻婆豆腐',
+    description: '川菜经典，麻辣鲜香',
+    ingredients: ['豆腐 400g', '肉末 100g', '豆瓣酱 2勺', '花椒粉 适量', '葱花 适量', '蒜末 适量'],
+    steps: [
+      '豆腐切块用盐水焯一下',
+      '肉末炒香，加入豆瓣酱炒出红油',
+      '加入高汤煮开',
+      '放入豆腐块煮3分钟',
+      '勾芡撒花椒粉和葱花即可'
+    ],
+    cookingTime: '18分钟',
+    difficulty: '中等',
+    tags: ['川菜', '麻辣', '素食'],
+    category: '川菜',
+    scores: { healthy: 7, simple: 6, difficulty: 5, quick: 7, vegetarian: 8, spicy: 9 }
+  },
+  {
+    id: '5',
+    name: '蒜蓉西兰花',
+    description: '清爽素菜，营养丰富',
+    ingredients: ['西兰花 1颗', '大蒜 4瓣', '盐 适量', '生抽 1勺', '香油 几滴'],
+    steps: [
+      '西兰花洗净切小朵',
+      '开水焯烫2分钟捞起',
+      '蒜切末爆香',
+      '倒入西兰花快速翻炒',
+      '调味出锅即可'
+    ],
+    cookingTime: '10分钟',
+    difficulty: '简单',
+    tags: ['素食', '健康', '清爽'],
+    category: '素食菜品',
+    scores: { healthy: 10, simple: 8, difficulty: 2, quick: 8, vegetarian: 10, spicy: 0 }
+  },
+  {
+    id: '6',
+    name: '红烧肉',
+    description: '传统名菜，肥而不腻',
+    ingredients: ['五花肉 500g', '冰糖 30g', '生抽 3勺', '老抽 1勺', '料酒 2勺', '八角 2个'],
+    steps: [
+      '五花肉切块，冷水下锅焯水',
+      '锅中放冰糖炒糖色',
+      '放入肉块翻炒上色',
+      '加入调料和开水没过肉块',
+      '小火炖煮40分钟收汁即可'
+    ],
+    cookingTime: '60分钟',
+    difficulty: '中等',
+    tags: ['传统', '荤菜', '红烧'],
+    category: '精品菜',
+    scores: { healthy: 4, simple: 4, difficulty: 6, quick: 3, vegetarian: 1, spicy: 0 }
+  },
+  {
+    id: '7',
+    name: '酸辣土豆丝',
+    description: '爽脆开胃，酸辣可口',
+    ingredients: ['土豆 2个', '青椒 1个', '红椒 1个', '干辣椒 适量', '白醋 2勺', '生抽 1勺'],
+    steps: [
+      '土豆切丝用水冲洗淀粉',
+      '青红椒切丝',
+      '热锅爆香干辣椒',
+      '下土豆丝大火翻炒',
+      '加入调料和青红椒丝炒匀即可'
+    ],
+    cookingTime: '12分钟',
+    difficulty: '简单',
+    tags: ['素食', '开胃', '酸辣'],
+    category: '素食菜品',
+    scores: { healthy: 8, simple: 8, difficulty: 3, quick: 8, vegetarian: 10, spicy: 6 }
+  },
+  {
+    id: '8',
+    name: '糖醋排骨',
+    description: '酸甜可口，老少皆宜',
+    ingredients: ['排骨 500g', '冰糖 50g', '生抽 3勺', '老抽 1勺', '料酒 2勺', '白醋 3勺'],
+    steps: [
+      '排骨洗净切段焯水',
+      '锅中放少量油炒糖色',
+      '放入排骨翻炒上色',
+      '加入调料和开水焖煮30分钟',
+      '大火收汁撒芝麻即可'
+    ],
+    cookingTime: '45分钟',
+    difficulty: '中等',
+    tags: ['甜品', '荤菜', '糖醋'],
+    category: '家常菜',
+    scores: { healthy: 5, simple: 5, difficulty: 6, quick: 4, vegetarian: 1, spicy: 0 }
+  }
+];
+
+interface DishRecommendationProps {
+  preferences: Preferences;
+  onPreferencesChange?: (preferences: Preferences) => void;
+  shouldUpdateRadar?: boolean;
+  onRadarUpdated?: () => void;
+}
+
+export function DishRecommendation({ 
+  preferences, 
+  onPreferencesChange, 
+  shouldUpdateRadar = false, 
+  onRadarUpdated 
+}: DishRecommendationProps) {
+  const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [dishes, setDishes] = useState<(Dish & { matchScore: number })[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // 计算菜品匹配度
+  const calculateMatchScore = (dish: Dish): number => {
+    const weights = {
+      healthy: 1,
+      simple: 1,
+      difficulty: -1,
+      quick: 1,
+      vegetarian: 1,
+      spicy: 1
+    };
+
+    let score = 0;
+    Object.entries(preferences).forEach(([key, value]) => {
+      const dishScore = dish.scores[key as keyof typeof dish.scores];
+      const weight = weights[key as keyof typeof weights];
+      
+      if (key === 'difficulty') {
+        score += Math.max(0, 10 - Math.abs(dishScore - value)) * weight;
+      } else {
+        score += Math.max(0, 10 - Math.abs(dishScore - value)) * weight;
+      }
+    });
+
+    return Math.round((score / 60) * 100);
+  };
+
+  // 获取推荐菜品
+  const fetchRecommendedDishes = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const recipes = await getRecommendedRecipes(preferences);
+      const convertedDishes = recipes
+        .map(recipe => convertRecipeToDish(recipe))
+        .map(dish => ({
+          ...dish,
+          matchScore: calculateMatchScore(dish)
+        }))
+        .slice(0, 6);
+      
+      setDishes(convertedDishes);
+    } catch (err) {
+      console.error('Error fetching recommendations:', err);
+      setError('获取推荐菜品失败，请稍后重试');
+      
+      // Fallback to mock data if API fails
+      const fallbackDishes = mockDishes
+        .map(dish => ({
+          ...dish,
+          matchScore: calculateMatchScore(dish)
+        }))
+        .sort((a, b) => b.matchScore - a.matchScore)
+        .slice(0, 6);
+      
+      setDishes(fallbackDishes);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch recommendations when preferences change
+  useEffect(() => {
+    fetchRecommendedDishes();
+  }, [preferences]);
+
+  // Update radar chart based on first recommended dish when shouldUpdateRadar is true
+  useEffect(() => {
+    if (dishes.length > 0 && onPreferencesChange && shouldUpdateRadar) {
+      const firstDish = dishes[0];
+      // Update preferences to reflect the characteristics of the best match
+      const updatedPreferences = {
+        healthy: firstDish.scores.healthy,
+        simple: firstDish.scores.simple,
+        difficulty: firstDish.scores.difficulty,
+        quick: firstDish.scores.quick,
+        vegetarian: firstDish.scores.vegetarian,
+        spicy: firstDish.scores.spicy
+      };
+      onPreferencesChange(updatedPreferences);
+      if (onRadarUpdated) {
+        onRadarUpdated(); // Notify parent that radar has been updated
+      }
+    }
+  }, [dishes, shouldUpdateRadar]);
+
+  const recommendedDishes = dishes;
+
+  const handleDishClick = (dish: Dish & { matchScore: number }) => {
+    setSelectedDish(dish);
+    setIsDialogOpen(true);
+  };
+
+  const handleDialogClose = () => {
+    setIsDialogOpen(false);
+    setSelectedDish(null);
+  };
+
+  return (
+    <>
+      <Card className="w-full h-fit bg-gradient-to-br from-white/90 to-purple-50/90 backdrop-blur-sm border-2 border-purple-200 shadow-xl">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-center sm:text-left bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent flex items-center gap-2">
+            <span className="text-2xl animate-bounce">🎯</span>
+            专属推荐菜品
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center space-y-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+                <p className="text-muted-foreground">正在为您推荐美味菜品...</p>
+              </div>
+            </div>
+          ) : error ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center space-y-4">
+                <div className="text-4xl">😅</div>
+                <p className="text-red-600">{error}</p>
+                <button 
+                  onClick={fetchRecommendedDishes}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                >
+                  重试
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+              {recommendedDishes.map((dish, index) => (
+                <DishCard
+                  key={dish.id}
+                  dish={dish}
+                  onClick={() => handleDishClick(dish)}
+                  index={index}
+                />
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <DishDetailDialog
+        dish={selectedDish}
+        isOpen={isDialogOpen}
+        onClose={handleDialogClose}
+      />
+    </>
+  );
+}
