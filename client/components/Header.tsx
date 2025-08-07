@@ -11,15 +11,23 @@ export function Header({ isDark = false, onThemeToggle }: HeaderProps) {
   return (
     <div className="text-center mb-8 sm:mb-12 relative">
       {/* 背景装饰 */}
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-emerald-500/10 rounded-3xl blur-3xl -z-10 animate-pulse-color"></div>
+      <div className={`absolute inset-0 rounded-3xl blur-3xl -z-10 animate-pulse-color ${
+        isDark 
+          ? 'bg-gradient-to-r from-blue-900/20 via-purple-900/20 to-emerald-900/20'
+          : 'bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-emerald-500/10'
+      }`}></div>
       
       <div className="relative">
         {/* 主标题 */}
         <div className="flex items-center justify-center gap-3 mb-4">
           <div className="animate-float">
-            <Sparkles className="w-8 h-8 text-purple-500" />
+            <Sparkles className={`w-8 h-8 ${isDark ? 'text-purple-400' : 'text-purple-500'}`} />
           </div>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl bg-gradient-to-r from-blue-600 via-purple-600 to-emerald-600 bg-clip-text text-transparent animate-gradient">
+          <h1 className={`text-3xl sm:text-4xl lg:text-5xl bg-clip-text text-transparent animate-gradient ${
+            isDark
+              ? 'bg-gradient-to-r from-blue-400 via-purple-400 to-emerald-400'
+              : 'bg-gradient-to-r from-blue-600 via-purple-600 to-emerald-600'
+          }`}>
             今天吃什么？
           </h1>
           <div className="animate-float" style={{ animationDelay: '1s' }}>
@@ -28,8 +36,14 @@ export function Header({ isDark = false, onThemeToggle }: HeaderProps) {
         </div>
         
         {/* 副标题 */}
-        <p className="text-muted-foreground text-sm sm:text-lg max-w-2xl mx-auto mb-6">
-          <span className="bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
+        <p className={`text-sm sm:text-lg max-w-2xl mx-auto mb-6 ${
+          isDark ? 'text-gray-300' : 'text-muted-foreground'
+        }`}>
+          <span className={`bg-clip-text text-transparent ${
+            isDark
+              ? 'bg-gradient-to-r from-orange-400 to-pink-400'
+              : 'bg-gradient-to-r from-orange-500 to-pink-500'
+          }`}>
             调整你的口味偏好，获取个性化菜品推荐
           </span>
         </p>
@@ -54,10 +68,14 @@ export function Header({ isDark = false, onThemeToggle }: HeaderProps) {
               variant="outline"
               size="sm"
               onClick={onThemeToggle}
-              className="bg-white/80 backdrop-blur-sm border-2 border-purple-200 hover:border-purple-400 transition-all duration-300"
+              className={`backdrop-blur-sm border-2 transition-all duration-300 hover:scale-110 ${
+                isDark
+                  ? 'bg-gray-800/80 border-gray-600 hover:border-gray-500 text-gray-200'
+                  : 'bg-white/80 border-purple-200 hover:border-purple-400 text-gray-700'
+              }`}
             >
               {isDark ? (
-                <Sun className="w-4 h-4 text-amber-500" />
+                <Sun className="w-4 h-4 text-amber-400" />
               ) : (
                 <Moon className="w-4 h-4 text-indigo-500" />
               )}

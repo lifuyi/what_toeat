@@ -1,3 +1,4 @@
+import React from 'react';
 import { Button } from './ui/button';
 import { Preferences } from './RadarController';
 
@@ -59,7 +60,7 @@ const presets: PresetConfig[] = [
   }
 ];
 
-export function PresetButtons({ onPresetSelect, onRandomRecommend }: PresetButtonsProps) {
+const PresetButtonsComponent = ({ onPresetSelect, onRandomRecommend }: PresetButtonsProps) => {
   // 生成随机偏好设置
   const generateRandomPreferences = (): Preferences => {
     return {
@@ -137,4 +138,7 @@ export function PresetButtons({ onPresetSelect, onRandomRecommend }: PresetButto
       </div>
     </div>
   );
-}
+};
+
+// 使用 React.memo 优化性能
+export const PresetButtons = React.memo(PresetButtonsComponent);

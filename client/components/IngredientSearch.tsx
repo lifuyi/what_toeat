@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card, CardContent } from './ui/card';
@@ -7,20 +7,16 @@ interface IngredientSearchProps {
   onSearch: () => void;
 }
 
-export function IngredientSearch({ onSearch }: IngredientSearchProps) {
+const IngredientSearchComponent = ({ onSearch }: IngredientSearchProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearching, setIsSearching] = useState(false);
 
-  const handleSearch = async () => {
-    if (!searchTerm.trim()) {
-      return;
-    }
+  const handleSearch = useCallback(async () => {
+    if (!searchTerm.trim()) return;
 
     setIsSearching(true);
     
     try {
-      // 这里可以调用API搜索相关菜品
-      // 暂时使用localStorage存储搜索词，供DishRecommendation组件使用
       localStorage.setItem('ingredientSearch', searchTerm.trim());
       onSearch();
     } catch (error) {
@@ -28,25 +24,25 @@ export function IngredientSearch({ onSearch }: IngredientSearchProps) {
     } finally {
       setIsSearching(false);
     }
-  };
+  }, [searchTerm, onSearch]);
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleSearch();
     }
-  };
+  }, [handleSearch]);
 
-  const clearSearch = () => {
+  const clearSearch = useCallback(() => {
     setSearchTerm('');
     localStorage.removeItem('ingredientSearch');
     onSearch();
-  };
+  }, [onSearch]);
 
   return (
-    <Card className="mb-6 bg-gradient-to-br from-green-50/90 to-emerald-50/90 backdrop-blur-sm border-2 border-emerald-200 shadow-lg">
+    <Card className="mb-6 backdrop-blur-sm border-2 shadow-lg transition-all duration-300 dark:bg-gradient-to-br dark:from-gray-800/90 dark:to-slate-800/90 dark:border-gray-600 bg-gradient-to-br from-green-50/90 to-emerald-50/90 border-emerald-200">
       <CardContent className="p-4">
         <div className="space-y-4">
-          <h3 className="text-center bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent flex items-center justify-center gap-2">
+          <h3 className="text-center bg-clip-text text-transparent flex items-center justify-center gap-2 dark:bg-gradient-to-r dark:from-emerald-400 dark:to-green-400 bg-gradient-to-r from-emerald-600 to-green-600">
             <span className="text-xl animate-bounce">🥬</span>
             食材搜索
           </h3>
@@ -60,10 +56,9 @@ export function IngredientSearch({ onSearch }: IngredientSearchProps) {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyPress={handleKeyPress}
                 className="
-                  pr-10 border-2 border-emerald-200 focus:border-emerald-400 
-                  bg-white/90 backdrop-blur-sm rounded-full
-                  placeholder:text-emerald-400 text-emerald-800
-                  transition-all duration-300 focus:shadow-lg focus:shadow-emerald-200/50
+                  pr-10 border-2 rounded-full backdrop-blur-sm transition-all duration-300 focus:shadow-lg
+                  dark:border-gray-600 dark:focus:border-emerald-500 dark:bg-gray-800/90 dark:placeholder:text-emerald-500 dark:text-emerald-300 dark:focus:shadow-emerald-500/20
+                  border-emerald-200 focus:border-emerald-400 bg-white/90 placeholder:text-emerald-400 text-emerald-800 focus:shadow-emerald-200/50
                 "
                 disabled={isSearching}
               />
@@ -108,7 +103,7 @@ export function IngredientSearch({ onSearch }: IngredientSearchProps) {
           </div>
           
           <div className="text-center">
-            <p className="text-xs text-emerald-600 opacity-80">
+            <p className="text-xs opacity-80 dark:text-emerald-400 text-emerald-600">
               💡 输入您现有的食材，我们为您推荐相关菜品
             </p>
           </div>
@@ -116,4 +111,7 @@ export function IngredientSearch({ onSearch }: IngredientSearchProps) {
       </CardContent>
     </Card>
   );
-}
+};
+
+// 使用 React.memo 优化性能
+export const IngredientSearch = React.memo(IngredientSearchComponent);

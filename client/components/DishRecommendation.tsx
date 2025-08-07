@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { DishCard } from './DishCard';
 import { DishDetailDialog } from './DishDetailDialog';
@@ -25,7 +25,11 @@ export interface Dish {
   };
 }
 
-const mockDishes: Dish[] = [
+// 导入mock数据
+import { mockDishes } from '../data/mockDishes';
+
+// 备用数据（如果导入失败）
+const fallbackMockDishes: Dish[] = [
   {
     id: '1',
     name: '番茄鸡蛋面',
@@ -239,13 +243,13 @@ interface DishRecommendationProps {
   fetchTrigger: number; // Add fetchTrigger prop
 }
 
-export function DishRecommendation({
+const DishRecommendationComponent = ({
   preferences,
   onPreferencesChange,
   shouldUpdateRadar = false,
   onRadarUpdated,
   fetchTrigger
-}: DishRecommendationProps) {
+}: DishRecommendationProps) => {
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dishes, setDishes] = useState<(Dish & { matchScore: number })[]>([]);
@@ -253,8 +257,8 @@ export function DishRecommendation({
   const [error, setError] = useState<string | null>(null);
   const [currentSearchTerm, setCurrentSearchTerm] = useState<string | null>(null);
 
-  // 计算菜品匹配度
-  const calculateMatchScore = (dish: Dish): number => {
+  // 计算菜品匹配度 - 使用 useMemo 缓存计算函数
+  const calculateMatchScore = useMemo(() => (dish: Dish): number => {
     const weights = {
       healthy: 1,
       simple: 1,
@@ -277,10 +281,10 @@ export function DishRecommendation({
     });
 
     return Math.round((score / 60) * 100);
-  };
+  }, [preferences]);
 
-  // 获取推荐菜品
-  const fetchRecommendedDishes = async () => {
+  // 获取推荐菜品 - 使用 useCallback 优化
+  const fetchRecommendedDishes = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -345,7 +349,7 @@ export function DishRecommendation({
     } finally {
       setLoading(false);
     }
-  };
+  }, [calculateMatchScore]);
 
   // Fetch recommendations when fetchTrigger changes
   useEffect(() => {
@@ -374,26 +378,26 @@ export function DishRecommendation({
 
   const recommendedDishes = dishes;
 
-  const handleDishClick = (dish: Dish & { matchScore: number }) => {
+  const handleDishClick = useCallback((dish: Dish & { matchScore: number }) => {
     setSelectedDish(dish);
     setIsDialogOpen(true);
-  };
+  }, []);
 
-  const handleDialogClose = () => {
+  const handleDialogClose = useCallback(() => {
     setIsDialogOpen(false);
     setSelectedDish(null);
-  };
+  }, []);
 
   return (
     <>
-      <Card className="w-full h-fit bg-gradient-to-br from-white/90 to-purple-50/90 backdrop-blur-sm border-2 border-purple-200 shadow-xl">
+      <Card className="w-full h-fit backdrop-blur-sm border-2 shadow-xl transition-all duration-300 dark:bg-gradient-to-br dark:from-gray-800/90 dark:to-slate-800/90 dark:border-gray-600 bg-gradient-to-br from-white/90 to-purple-50/90 border-purple-200">
         <CardHeader className="pb-4">
-          <CardTitle className="text-center sm:text-left bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent flex items-center gap-2">
+          <CardTitle className="text-center sm:text-left bg-clip-text text-transparent flex items-center gap-2 dark:bg-gradient-to-r dark:from-orange-400 dark:to-red-400 bg-gradient-to-r from-orange-600 to-red-600">
             {currentSearchTerm ? (
               <>
                 <span className="text-2xl animate-bounce">🔍</span>
                 食材搜索结果
-                <span className="text-sm bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
+                <span className="text-sm bg-clip-text text-transparent dark:bg-gradient-to-r dark:from-emerald-400 dark:to-green-400 bg-gradient-to-r from-emerald-600 to-green-600">
                   "{currentSearchTerm}"
                 </span>
               </>
@@ -448,4 +452,7 @@ export function DishRecommendation({
       />
     </>
   );
-}
+};
+
+// 使用 React.memo 优化性能
+export const DishRecommendation = React.memo(DishRecommendationComponent);

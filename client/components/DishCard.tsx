@@ -37,7 +37,7 @@ const borderGradients = [
   'from-rose-500 to-pink-500',
 ];
 
-export const DishCard = React.forwardRef<HTMLDivElement, DishCardProps>(
+const DishCardComponent = React.forwardRef<HTMLDivElement, DishCardProps>(
   ({ dish, onClick, index }, ref) => {
     const gradientIndex = index % cardGradients.length;
     
@@ -56,13 +56,14 @@ export const DishCard = React.forwardRef<HTMLDivElement, DishCardProps>(
           transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]
           bg-gradient-to-br ${cardGradients[gradientIndex]}
           border-2 border-transparent bg-clip-padding
+          dark:hover:shadow-gray-900/40
         `}
         onClick={handleClick}
       >
       {/* 渐变边框效果 */}
       <div className={`absolute inset-0 bg-gradient-to-r ${borderGradients[gradientIndex]} opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg`} 
            style={{ padding: '2px' }}>
-        <div className="bg-card rounded-md h-full w-full"></div>
+        <div className="rounded-md h-full w-full dark:bg-gray-800 bg-card"></div>
       </div>
       
       <CardContent className="relative p-4 z-10">
@@ -79,10 +80,10 @@ export const DishCard = React.forwardRef<HTMLDivElement, DishCardProps>(
           
           {/* 菜品名称和描述 */}
           <div>
-            <h3 className="line-clamp-1 bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent group-hover:from-purple-600 group-hover:to-blue-600 transition-all duration-300">
+            <h3 className="line-clamp-1 bg-clip-text text-transparent transition-all duration-300 dark:bg-gradient-to-r dark:from-gray-200 dark:to-gray-400 dark:group-hover:from-purple-400 dark:group-hover:to-blue-400 bg-gradient-to-r from-gray-800 to-gray-600 group-hover:from-purple-600 group-hover:to-blue-600">
               {dish.name}
             </h3>
-            <p className="text-muted-foreground text-sm line-clamp-2 mt-1">
+            <p className="text-sm line-clamp-2 mt-1 dark:text-gray-400 text-muted-foreground">
               {dish.description}
             </p>
           </div>
@@ -103,7 +104,7 @@ export const DishCard = React.forwardRef<HTMLDivElement, DishCardProps>(
               </Badge>
             ))}
             {dish.tags.length > 3 && (
-              <Badge variant="outline" className="text-xs border-gray-300">
+              <Badge variant="outline" className="text-xs dark:border-gray-600 dark:text-gray-400 border-gray-300">
                 +{dish.tags.length - 3}
               </Badge>
             )}
@@ -132,4 +133,13 @@ export const DishCard = React.forwardRef<HTMLDivElement, DishCardProps>(
   }
 );
 
-DishCard.displayName = "DishCard";
+DishCardComponent.displayName = "DishCard";
+
+// 使用 React.memo 优化性能
+export const DishCard = React.memo(DishCardComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.dish.id === nextProps.dish.id &&
+    prevProps.dish.matchScore === nextProps.dish.matchScore &&
+    prevProps.index === nextProps.index
+  );
+});

@@ -1,9 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { Header } from './components/Header';
 import { PresetButtons } from './components/PresetButtons';
-import { IngredientSearch } from './components/IngredientSearch';
-import { RadarController, Preferences } from './components/RadarController';
-import { DishRecommendation } from './components/DishRecommendation';
+import { Preferences } from './components/RadarController';
+
+// 懒加载重型组件
+const IngredientSearch = lazy(() => import('./components/IngredientSearch').then(module => ({ default: module.IngredientSearch })));
+const RadarController = lazy(() => import('./components/RadarController').then(module => ({ default: module.RadarController })));
+const DishRecommendation = lazy(() => import('./components/DishRecommendation').then(module => ({ default: module.DishRecommendation })));
 
 export default function App() {
   const [preferences, setPreferences] = useState<Preferences>({
@@ -17,12 +20,27 @@ export default function App() {
   const [fetchTrigger, setFetchTrigger] = useState(0);
   const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
 
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    // 从localStorage读取深色模式设置
+    const saved = localStorage.getItem('darkMode');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return saved ? saved === 'true' : prefersDark;
+  });
   const [shouldUpdateRadarFromRecommendations, setShouldUpdateRadarFromRecommendations] = useState(false);
 
   const handleThemeToggle = () => {
-    setIsDarkMode(!isDarkMode);
-    // 这里可以添加主题切换逻辑
+    const newDarkMode = !isDarkMode;
+    setIsDarkMode(newDarkMode);
+    
+    // 保存到localStorage
+    localStorage.setItem('darkMode', newDarkMode.toString());
+    
+    // 更新document类名
+    if (newDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   };
 
   const handlePresetSelect = (newPreferences: Preferences) => {
@@ -49,6 +67,15 @@ export default function App() {
     setDebounceTimer(timer);
   };
 
+  // 初始化深色模式
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
   // 组件卸载时清理定时器
   useEffect(() => {
     return () => {
@@ -61,8 +88,16 @@ export default function App() {
   return (
     <div className={`min-h-screen transition-all duration-500 ${isDarkMode ? 'dark' : ''}`}>
       {/* 动态背景 */}
-      <div className="fixed inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-emerald-50 animate-gradient -z-10"></div>
-      <div className="fixed inset-0 bg-gradient-to-tr from-pink-50/50 via-transparent to-cyan-50/50 animate-pulse-color -z-10"></div>
+      <div className={`fixed inset-0 animate-gradient -z-10 ${
+        isDarkMode 
+          ? 'bg-gradient-to-br from-gray-900 via-slate-800 to-gray-900' 
+          : 'bg-gradient-to-br from-blue-50 via-purple-50 to-emerald-50'
+      }`}></div>
+      <div className={`fixed inset-0 animate-pulse-color -z-10 ${
+        isDarkMode
+          ? 'bg-gradient-to-tr from-blue-900/20 via-transparent to-purple-900/20'
+          : 'bg-gradient-to-tr from-pink-50/50 via-transparent to-cyan-50/50'
+      }`}></div>
       
       <div className="relative container mx-auto px-4 py-6 max-w-7xl">
         {/* 头部组件 */}
@@ -75,7 +110,9 @@ export default function App() {
         />
 
         {/* 食材搜索 */}
-        <IngredientSearch onSearch={() => setFetchTrigger(prev => prev + 1)} />
+        <Suspense fallback={<div className="h-32 bg-gradient-to-br from-green-50/90 to-emerald-50/90 rounded-lg animate-pulse"></div>}>
+          <IngredientSearch onSearch={() => setFetchTrigger(prev => prev + 1)} />
+        </Suspense>
 
         {/* 主要内容区域 */}
         <div className="space-y-8 lg:space-y-12">
@@ -83,43 +120,47 @@ export default function App() {
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12">
             {/* 雷达控制器 */}
             <div className="lg:col-span-2">
-              <RadarController
-                preferences={preferences}
-                onPreferencesChange={handlePreferencesChange}
-              />
+              <Suspense fallback={<div className="h-96 bg-gradient-to-br from-white/90 to-blue-50/90 rounded-lg animate-pulse"></div>}>
+                <RadarController
+                  preferences={preferences}
+                  onPreferencesChange={handlePreferencesChange}
+                />
+              </Suspense>
             </div>
             
             {/* 菜品推荐 */}
             <div className="lg:col-span-3">
-              <DishRecommendation 
-                preferences={preferences} 
-                onPreferencesChange={setPreferences}
-                shouldUpdateRadar={shouldUpdateRadarFromRecommendations}
-                onRadarUpdated={() => setShouldUpdateRadarFromRecommendations(false)}
-                fetchTrigger={fetchTrigger}
-              />
+              <Suspense fallback={<div className="h-96 bg-gradient-to-br from-white/90 to-purple-50/90 rounded-lg animate-pulse"></div>}>
+                <DishRecommendation 
+                  preferences={preferences} 
+                  onPreferencesChange={setPreferences}
+                  shouldUpdateRadar={shouldUpdateRadarFromRecommendations}
+                  onRadarUpdated={() => setShouldUpdateRadarFromRecommendations(false)}
+                  fetchTrigger={fetchTrigger}
+                />
+              </Suspense>
             </div>
           </div>
 
           {/* 底部提示信息 */}
-          <div className="text-center space-y-3 pt-8 border-t border-gradient-to-r from-transparent via-purple-200 to-transparent">
+          <div className="text-center space-y-3 pt-8 border-t dark:border-gray-700 border-gradient-to-r from-transparent via-purple-200 to-transparent">
             <div className="flex flex-wrap items-center justify-center gap-4 text-sm">
-              <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-full border border-blue-200">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full border transition-all duration-300 dark:bg-gradient-to-r dark:from-blue-900/20 dark:to-purple-900/20 dark:border-blue-700 bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-blue-200">
                 <span className="animate-pulse">💡</span>
-                <span className="text-blue-700">实时智能推荐</span>
+                <span className="dark:text-blue-400 text-blue-700">实时智能推荐</span>
               </div>
-              <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 rounded-full border border-emerald-200">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full border transition-all duration-300 dark:bg-gradient-to-r dark:from-emerald-900/20 dark:to-cyan-900/20 dark:border-emerald-700 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border-emerald-200">
                 <span className="animate-bounce">👆</span>
-                <span className="text-emerald-700">点击查看详细制作</span>
+                <span className="dark:text-emerald-400 text-emerald-700">点击查看详细制作</span>
               </div>
-              <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500/10 to-pink-500/10 rounded-full border border-orange-200">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full border transition-all duration-300 dark:bg-gradient-to-r dark:from-orange-900/20 dark:to-pink-900/20 dark:border-orange-700 bg-gradient-to-r from-orange-500/10 to-pink-500/10 border-orange-200">
                 <span className="animate-pulse">🎯</span>
-                <span className="text-orange-700">个性化口味匹配</span>
+                <span className="dark:text-orange-400 text-orange-700">个性化口味匹配</span>
               </div>
             </div>
             
-            <div className="text-xs text-muted-foreground">
-              <p className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+            <div className="text-xs dark:text-gray-400 text-muted-foreground">
+              <p className="bg-clip-text text-transparent dark:bg-gradient-to-r dark:from-purple-400 dark:to-blue-400 bg-gradient-to-r from-purple-600 to-blue-600">
                 ✨ 基于AI算法的美食推荐引擎 · 让每一餐都恰到好处 ✨
               </p>
             </div>

@@ -1,3 +1,4 @@
+import React, { useMemo, useCallback } from 'react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Slider } from './ui/slider';
@@ -22,22 +23,22 @@ interface RadarControllerProps {
   onPreferencesChange: (preferences: Preferences) => void;
 }
 
-export function RadarController({ preferences, onPreferencesChange }: RadarControllerProps) {
-  const radarData: PreferenceData[] = [
+const RadarControllerComponent = ({ preferences, onPreferencesChange }: RadarControllerProps) => {
+  const radarData: PreferenceData[] = useMemo(() => [
     { dimension: '健康', value: preferences.healthy, fullMark: 10 },
     { dimension: '简单', value: preferences.simple, fullMark: 10 },
     { dimension: '难度', value: preferences.difficulty, fullMark: 10 },
     { dimension: '快速', value: preferences.quick, fullMark: 10 },
     { dimension: '素食', value: preferences.vegetarian, fullMark: 10 },
     { dimension: '辛辣', value: preferences.spicy, fullMark: 10 },
-  ];
+  ], [preferences]);
 
-  const handleSliderChange = (key: keyof Preferences, value: number[]) => {
+  const handleSliderChange = useCallback((key: keyof Preferences, value: number[]) => {
     onPreferencesChange({
       ...preferences,
       [key]: value[0],
     });
-  };
+  }, [preferences, onPreferencesChange]);
 
   const sliderConfigs = [
     { 
@@ -91,9 +92,9 @@ export function RadarController({ preferences, onPreferencesChange }: RadarContr
   ];
 
   return (
-    <Card className="w-full h-fit bg-gradient-to-br from-white/90 to-blue-50/90 backdrop-blur-sm border-2 border-blue-200 shadow-xl">
+    <Card className="w-full h-fit backdrop-blur-sm border-2 shadow-xl transition-all duration-300 dark:bg-gradient-to-br dark:from-gray-800/90 dark:to-slate-800/90 dark:border-gray-600 bg-gradient-to-br from-white/90 to-blue-50/90 border-blue-200">
       <CardHeader className="pb-4">
-        <CardTitle className="text-center sm:text-left bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent flex items-center gap-2">
+        <CardTitle className="text-center sm:text-left bg-clip-text text-transparent flex items-center gap-2 dark:bg-gradient-to-r dark:from-purple-400 dark:to-blue-400 bg-gradient-to-r from-purple-600 to-blue-600">
           <span className="text-2xl animate-bounce">🎛️</span>
           口味偏好设置
         </CardTitle>
@@ -101,8 +102,8 @@ export function RadarController({ preferences, onPreferencesChange }: RadarContr
       <CardContent className="space-y-6">
         {/* 雷达图 */}
         <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-cyan-500/10 rounded-2xl blur-xl"></div>
-          <div className="relative h-48 sm:h-56 lg:h-64 bg-white/50 rounded-2xl p-4 border border-blue-200">
+          <div className="absolute inset-0 rounded-2xl blur-xl dark:bg-gradient-to-r dark:from-purple-900/20 dark:via-blue-900/20 dark:to-cyan-900/20 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-cyan-500/10"></div>
+          <div className="relative h-48 sm:h-56 lg:h-64 rounded-2xl p-4 border transition-all duration-300 dark:bg-gray-800/50 dark:border-gray-600 bg-white/50 border-blue-200">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart data={radarData} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
                 <PolarGrid stroke="#e2e8f0" />
@@ -144,11 +145,11 @@ export function RadarController({ preferences, onPreferencesChange }: RadarContr
         {/* 滑块控制器 */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {sliderConfigs.map(({ key, label, value, emoji, gradient, color }) => (
-            <div key={key} className="space-y-3 p-4 bg-gradient-to-br from-white/80 to-gray-50/80 rounded-xl border border-gray-200 hover:shadow-lg transition-all duration-300">
+            <div key={key} className="space-y-3 p-4 rounded-xl border hover:shadow-lg transition-all duration-300 dark:bg-gradient-to-br dark:from-gray-700/80 dark:to-gray-800/80 dark:border-gray-600 dark:hover:shadow-gray-900/20 bg-gradient-to-br from-white/80 to-gray-50/80 border-gray-200">
               <div className="flex items-center justify-between">
                 <label className="text-sm sm:text-base flex items-center gap-2">
                   <span className="text-lg animate-pulse">{emoji}</span>
-                  <span className="text-gray-700">{label}</span>
+                  <span className="dark:text-gray-200 text-gray-700">{label}</span>
                 </label>
                 <span className={`
                   text-sm px-3 py-1 rounded-full text-white
@@ -181,4 +182,7 @@ export function RadarController({ preferences, onPreferencesChange }: RadarContr
       </CardContent>
     </Card>
   );
-}
+};
+
+// 使用 React.memo 优化性能
+export const RadarController = React.memo(RadarControllerComponent);
