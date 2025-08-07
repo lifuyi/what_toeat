@@ -169,6 +169,65 @@ const mockDishes: Dish[] = [
     tags: ['甜品', '荤菜', '糖醋'],
     category: '家常菜',
     scores: { healthy: 5, simple: 5, difficulty: 6, quick: 4, vegetarian: 1, spicy: 0 }
+  },
+  {
+    id: '9',
+    name: '水蒸蛋羹',
+    description: '嫩滑如丝，营养丰富的经典蒸蛋',
+    ingredients: ['鸡蛋 3个', '温水 200ml', '盐 少许', '香油 几滴', '葱花 适量', '生抽 1勺'],
+    steps: [
+      '鸡蛋打散，加入盐搅拌均匀',
+      '缓慢倒入温水，边倒边搅拌',
+      '过筛去除泡沫，倒入蒸碗',
+      '盖上保鲜膜，用牙签扎几个小孔',
+      '蒸锅水开后蒸12分钟',
+      '出锅后淋香油、生抽，撒葱花即可'
+    ],
+    cookingTime: '20分钟',
+    difficulty: '简单',
+    tags: ['蒸菜', '嫩滑', '营养', '清淡'],
+    category: '健康菜品',
+    scores: { healthy: 9, simple: 8, difficulty: 2, quick: 7, vegetarian: 6, spicy: 0 }
+  },
+  {
+    id: '10',
+    name: '红烧排骨',
+    description: '色泽红亮，肉质软烂，香甜可口',
+    ingredients: ['排骨 600g', '生姜 3片', '八角 2个', '桂皮 1段', '冰糖 40g', '生抽 4勺', '老抽 2勺', '料酒 3勺'],
+    steps: [
+      '排骨剁段，冷水下锅焯水去血沫',
+      '热锅下冰糖小火炒至焦糖色',
+      '下排骨翻炒至上色均匀',
+      '加入姜片、八角、桂皮炒香',
+      '倒入生抽、老抽、料酒炒匀',
+      '加开水没过排骨，大火烧开转小火',
+      '盖盖炖煮45分钟至软烂',
+      '大火收汁至浓稠即可'
+    ],
+    cookingTime: '65分钟',
+    difficulty: '中等',
+    tags: ['红烧', '软烂', '下饭', '家常'],
+    category: '家常菜',
+    scores: { healthy: 6, simple: 5, difficulty: 5, quick: 3, vegetarian: 1, spicy: 0 }
+  },
+  {
+    id: '11',
+    name: '凉拌黄瓜',
+    description: '清脆爽口，开胃解腻的经典凉菜',
+    ingredients: ['黄瓜 2根', '大蒜 3瓣', '香菜 适量', '生抽 2勺', '香醋 2勺', '香油 1勺', '盐 适量', '糖 少许', '辣椒油 适量'],
+    steps: [
+      '黄瓜洗净，用刀拍扁后切段',
+      '撒盐腌制10分钟，挤出水分',
+      '大蒜切末，香菜切段',
+      '调制料汁：生抽、香醋、香油、糖、辣椒油',
+      '将黄瓜、蒜末、香菜混合',
+      '淋上调料汁拌匀即可'
+    ],
+    cookingTime: '15分钟',
+    difficulty: '简单',
+    tags: ['凉菜', '爽口', '开胃', '素食'],
+    category: '凉菜',
+    scores: { healthy: 9, simple: 9, difficulty: 1, quick: 9, vegetarian: 10, spicy: 3 }
   }
 ];
 
@@ -232,7 +291,7 @@ export function DishRecommendation({
           ...dish,
           matchScore: calculateMatchScore(dish)
         }))
-        .slice(0, 6);
+        .slice(0, 9);
       
       setDishes(convertedDishes);
     } catch (err) {
@@ -246,7 +305,7 @@ export function DishRecommendation({
           matchScore: calculateMatchScore(dish)
         }))
         .sort((a, b) => b.matchScore - a.matchScore)
-        .slice(0, 6);
+        .slice(0, 9);
       
       setDishes(fallbackDishes);
     } finally {

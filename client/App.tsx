@@ -40,7 +40,10 @@ export default function App() {
         <Header isDark={isDarkMode} onThemeToggle={handleThemeToggle} />
 
         {/* 预设配置按钮 */}
-        <PresetButtons onPresetSelect={handlePresetSelect} />
+        <PresetButtons 
+          onPresetSelect={handlePresetSelect} 
+          onRandomRecommend={() => setFetchTrigger(prev => prev + 1)}
+        />
 
         {/* 主要内容区域 */}
         <div className="space-y-8 lg:space-y-12">

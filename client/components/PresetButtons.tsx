@@ -11,6 +11,7 @@ interface PresetConfig {
 
 interface PresetButtonsProps {
   onPresetSelect: (preferences: Preferences) => void;
+  onRandomRecommend?: () => void;
 }
 
 const presets: PresetConfig[] = [
@@ -58,13 +59,32 @@ const presets: PresetConfig[] = [
   }
 ];
 
-export function PresetButtons({ onPresetSelect }: PresetButtonsProps) {
+export function PresetButtons({ onPresetSelect, onRandomRecommend }: PresetButtonsProps) {
+  // 生成随机偏好设置
+  const generateRandomPreferences = (): Preferences => {
+    return {
+      healthy: Math.floor(Math.random() * 10) + 1,
+      simple: Math.floor(Math.random() * 10) + 1,
+      difficulty: Math.floor(Math.random() * 10) + 1,
+      quick: Math.floor(Math.random() * 10) + 1,
+      vegetarian: Math.floor(Math.random() * 10) + 1,
+      spicy: Math.floor(Math.random() * 10) + 1,
+    };
+  };
+
+  const handleRandomRecommend = () => {
+    const randomPreferences = generateRandomPreferences();
+    onPresetSelect(randomPreferences);
+    if (onRandomRecommend) {
+      onRandomRecommend();
+    }
+  };
   return (
     <div className="mb-6">
       <h3 className="text-center mb-4 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
         🎯 快速预设配置
       </h3>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
         {presets.map((preset) => (
           <Button
             key={preset.name}
@@ -90,6 +110,30 @@ export function PresetButtons({ onPresetSelect }: PresetButtonsProps) {
             </div>
           </Button>
         ))}
+        
+        {/* 随机推荐按钮 */}
+        <Button
+          variant="outline"
+          onClick={handleRandomRecommend}
+          className="
+            relative h-auto p-3 bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-600
+            text-white border-0 hover:scale-105 transform transition-all duration-300
+            hover:shadow-lg hover:shadow-purple-500/25 group overflow-hidden
+          "
+        >
+          {/* 背景动画 */}
+          <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          
+          <div className="relative flex flex-col items-center gap-1 text-center">
+            <span className="text-lg animate-spin group-hover:animate-bounce">
+              🎲
+            </span>
+            <span className="text-xs font-medium">随机推荐</span>
+            <span className="text-xs opacity-90 leading-tight">
+              惊喜美食
+            </span>
+          </div>
+        </Button>
       </div>
     </div>
   );

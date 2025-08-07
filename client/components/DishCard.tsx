@@ -16,6 +16,11 @@ const cardGradients = [
   'from-pink-500/10 to-rose-500/10',
   'from-indigo-500/10 to-blue-500/10',
   'from-lime-500/10 to-green-500/10',
+  'from-violet-500/10 to-fuchsia-500/10',
+  'from-amber-500/10 to-yellow-500/10',
+  'from-teal-500/10 to-emerald-500/10',
+  'from-sky-500/10 to-indigo-500/10',
+  'from-rose-500/10 to-pink-500/10',
 ];
 
 const borderGradients = [
@@ -25,6 +30,11 @@ const borderGradients = [
   'from-pink-500 to-rose-500',
   'from-indigo-500 to-blue-500',
   'from-lime-500 to-green-500',
+  'from-violet-500 to-fuchsia-500',
+  'from-amber-500 to-yellow-500',
+  'from-teal-500 to-emerald-500',
+  'from-sky-500 to-indigo-500',
+  'from-rose-500 to-pink-500',
 ];
 
 export const DishCard = React.forwardRef<HTMLDivElement, DishCardProps>(
