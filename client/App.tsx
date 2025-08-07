@@ -13,6 +13,7 @@ export default function App() {
     vegetarian: 5,
     spicy: 5,
   });
+  const [fetchTrigger, setFetchTrigger] = useState(0);
 
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [shouldUpdateRadarFromRecommendations, setShouldUpdateRadarFromRecommendations] = useState(false);
@@ -25,6 +26,7 @@ export default function App() {
   const handlePresetSelect = (newPreferences: Preferences) => {
     setPreferences(newPreferences);
     setShouldUpdateRadarFromRecommendations(true);
+    setFetchTrigger(prev => prev + 1); // Increment trigger to force re-fetch
   };
 
   return (
@@ -59,6 +61,7 @@ export default function App() {
                 onPreferencesChange={setPreferences}
                 shouldUpdateRadar={shouldUpdateRadarFromRecommendations}
                 onRadarUpdated={() => setShouldUpdateRadarFromRecommendations(false)}
+                fetchTrigger={fetchTrigger}
               />
             </div>
           </div>

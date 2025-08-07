@@ -177,13 +177,15 @@ interface DishRecommendationProps {
   onPreferencesChange?: (preferences: Preferences) => void;
   shouldUpdateRadar?: boolean;
   onRadarUpdated?: () => void;
+  fetchTrigger: number; // Add fetchTrigger prop
 }
 
-export function DishRecommendation({ 
-  preferences, 
-  onPreferencesChange, 
-  shouldUpdateRadar = false, 
-  onRadarUpdated 
+export function DishRecommendation({
+  preferences,
+  onPreferencesChange,
+  shouldUpdateRadar = false,
+  onRadarUpdated,
+  fetchTrigger
 }: DishRecommendationProps) {
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -252,10 +254,10 @@ export function DishRecommendation({
     }
   };
 
-  // Fetch recommendations when preferences change
+  // Fetch recommendations when fetchTrigger changes
   useEffect(() => {
     fetchRecommendedDishes();
-  }, [preferences]);
+  }, [fetchTrigger]);
 
   // Update radar chart based on first recommended dish when shouldUpdateRadar is true
   useEffect(() => {

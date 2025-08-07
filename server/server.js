@@ -164,7 +164,7 @@ app.post("/api/recommendations", (req, res) => {
     FROM recipes 
     WHERE title IS NOT NULL AND title != ''
     ORDER BY preference_distance ASC
-    LIMIT 20
+    LIMIT 10
   `;
 
   const params = [
