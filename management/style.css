@@ -9,20 +9,21 @@
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
-    padding: 20px;
+    padding: 15px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: #333;
     min-height: 100vh;
-    line-height: 1.6;
+    line-height: 1.4;
+    font-size: 14px;
 }
 
 .container {
     max-width: 1200px;
     margin: 0 auto;
     background-color: #fff;
-    padding: 40px;
-    border-radius: 20px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.15);
     backdrop-filter: blur(10px);
     position: relative;
     overflow: hidden;
@@ -49,8 +50,8 @@ body {
 h1 {
     color: #2c3e50;
     text-align: center;
-    margin-bottom: 30px;
-    font-size: 2.5em;
+    margin-bottom: 20px;
+    font-size: 2em;
     font-weight: 700;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
     position: relative;
@@ -70,12 +71,12 @@ h1::after {
 
 h2 {
     color: #34495e;
-    margin-bottom: 25px;
-    font-size: 1.8em;
+    margin-bottom: 15px;
+    font-size: 1.4em;
     font-weight: 600;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
 }
 
 h2::before {
@@ -88,14 +89,14 @@ h2::before {
 }
 
 .search-section, .recipe-display, .edit-section {
-    margin-bottom: 30px;
-    padding: 30px;
+    margin-bottom: 20px;
+    padding: 20px;
     border: none;
-    border-radius: 15px;
+    border-radius: 12px;
     background: linear-gradient(145deg, #ffffff, #f0f0f0);
     box-shadow: 
-        20px 20px 60px #d9d9d9,
-        -20px -20px 60px #ffffff;
+        15px 15px 45px #d9d9d9,
+        -15px -15px 45px #ffffff;
     transition: all 0.3s ease;
 }
 
@@ -115,11 +116,11 @@ h2::before {
 
 .search-section input[type="text"] {
     flex: 1;
-    min-width: 300px;
-    padding: 15px 20px;
+    min-width: 250px;
+    padding: 10px 16px;
     border: 2px solid #e0e0e0;
-    border-radius: 50px;
-    font-size: 16px;
+    border-radius: 25px;
+    font-size: 14px;
     transition: all 0.3s ease;
     background: #fff;
     box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
@@ -134,18 +135,28 @@ h2::before {
 
 .search-section button,
 .edit-section button {
-    padding: 15px 30px;
+    padding: 10px 20px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
-    border-radius: 50px;
+    border-radius: 25px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 3px 12px rgba(102, 126, 234, 0.3);
     position: relative;
     overflow: hidden;
+    margin-right: 8px;
+}
+
+#clearButton {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    box-shadow: 0 4px 15px rgba(240, 147, 251, 0.3);
+}
+
+#clearButton:hover {
+    box-shadow: 0 8px 25px rgba(240, 147, 251, 0.4);
 }
 
 .search-section button:hover,
@@ -191,8 +202,8 @@ h2::before {
 
 .edit-section form {
     display: grid;
-    grid-template-columns: 200px 1fr;
-    gap: 20px 30px;
+    grid-template-columns: 180px 1fr 180px 1fr;
+    gap: 15px 20px;
     align-items: center;
 }
 
@@ -201,15 +212,16 @@ h2::before {
     font-weight: 600;
     color: #555;
     margin-bottom: 0;
+    font-size: 13px;
 }
 
 .edit-section input[type="text"],
 .edit-section textarea {
     width: 100%;
-    padding: 12px 16px;
+    padding: 8px 12px;
     border: 2px solid #e0e0e0;
-    border-radius: 10px;
-    font-size: 14px;
+    border-radius: 8px;
+    font-size: 13px;
     transition: all 0.3s ease;
     background: #fff;
     margin-bottom: 0;
@@ -225,23 +237,24 @@ h2::before {
 
 .edit-section textarea {
     resize: vertical;
-    min-height: 80px;
+    min-height: 60px;
     font-family: inherit;
 }
 
 .edit-section button {
     grid-column: 1 / -1;
-    margin-top: 20px;
+    margin-top: 15px;
     justify-self: center;
-    min-width: 200px;
+    min-width: 160px;
 }
 
 #message {
     text-align: center;
-    margin-top: 20px;
-    padding: 15px;
-    border-radius: 10px;
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 8px;
     font-weight: 600;
+    font-size: 13px;
     transition: all 0.3s ease;
 }
 
@@ -275,6 +288,19 @@ h2::before {
     
     .edit-section label {
         text-align: left;
+    }
+    
+    .form-group.full-width {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .form-group.full-width label {
+        text-align: left;
+    }
+    
+    .compact-input {
+        max-width: 100%;
     }
     
     .search-section {
@@ -320,11 +346,23 @@ h2::before {
 
 .form-group.full-width {
     grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 15px 20px;
+    align-items: center;
 }
 
 .form-group.full-width label {
-    text-align: left;
-    margin-bottom: 8px;
+    text-align: right;
+    margin-bottom: 0;
+}
+
+.form-group.compact {
+    display: contents;
+}
+
+.compact-input {
+    max-width: 120px;
 }
 
 /* 特殊字段样式 */
@@ -332,6 +370,36 @@ h2::before {
     background-color: #f8f9fa;
     color: #6c757d;
     cursor: not-allowed;
+}
+
+/* 缩略图预览样式 */
+.thumb-input-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.thumb-preview {
+    align-self: flex-start;
+}
+
+.thumb-preview img {
+    width: 200px;
+    height: 300px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid #e0e0e0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.thumb-preview img:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.thumb-preview.hidden {
+    display: none;
 }
 
 /* 工具提示 */

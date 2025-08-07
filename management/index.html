@@ -14,6 +14,7 @@
             <h2>搜索菜谱</h2>
             <input type="text" id="searchInput" placeholder="请输入菜谱ID或标题">
             <button id="searchButton">搜索</button>
+            <button id="clearButton" type="button">清空表单</button>
         </div>
 
         <div class="edit-section">
@@ -54,104 +55,109 @@
                     <textarea id="recipeFl" rows="4"></textarea>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group compact">
                     <label for="recipeDid">分类ID (did):</label>
-                    <input type="text" id="recipeDid">
+                    <input type="text" id="recipeDid" class="compact-input">
                 </div>
 
-                <div class="form-group">
+                <div class="form-group compact">
                     <label for="recipeCid">菜系ID (cid):</label>
-                    <input type="text" id="recipeCid">
+                    <input type="text" id="recipeCid" class="compact-input">
                 </div>
 
-                <div class="form-group">
+                <div class="form-group compact">
                     <label for="recipeZid">专题ID (zid):</label>
-                    <input type="text" id="recipeZid">
+                    <input type="text" id="recipeZid" class="compact-input">
                 </div>
 
-                <div class="form-group">
+                <div class="form-group compact">
                     <label for="recipeDifficulty">难度等级:</label>
-                    <input type="text" id="recipeDifficulty">
+                    <input type="text" id="recipeDifficulty" class="compact-input">
                 </div>
 
-                <div class="form-group">
+                <div class="form-group full-width">
                     <label for="recipeCosttime">制作时间:</label>
                     <input type="text" id="recipeCosttime">
                 </div>
 
-                <div class="form-group">
+                <div class="form-group compact">
                     <label for="recipeGrade">评分:</label>
-                    <input type="text" id="recipeGrade">
+                    <input type="text" id="recipeGrade" class="compact-input">
                 </div>
 
-                <div class="form-group">
+                <div class="form-group compact">
                     <label for="recipeHealth">健康度:</label>
-                    <input type="text" id="recipeHealth">
+                    <input type="text" id="recipeHealth" class="compact-input">
                 </div>
 
-                <div class="form-group">
+                <div class="form-group compact">
                     <label for="recipeDifficultyScore">制作难易:</label>
-                    <input type="text" id="recipeDifficultyScore">
+                    <input type="text" id="recipeDifficultyScore" class="compact-input">
                 </div>
 
-                <div class="form-group">
+                <div class="form-group compact">
                     <label for="recipeSpeed">制作速度:</label>
-                    <input type="text" id="recipeSpeed">
+                    <input type="text" id="recipeSpeed" class="compact-input">
                 </div>
 
-                <div class="form-group">
+                <div class="form-group compact">
                     <label for="recipeFavor">素食偏好:</label>
-                    <input type="text" id="recipeFavor">
+                    <input type="text" id="recipeFavor" class="compact-input">
                 </div>
 
-                <div class="form-group">
+                <div class="form-group compact">
                     <label for="recipeSpicy">辛辣程度:</label>
-                    <input type="text" id="recipeSpicy">
+                    <input type="text" id="recipeSpicy" class="compact-input">
                 </div>
 
-                <div class="form-group">
+                <div class="form-group compact">
                     <label for="recipeSweet">甜度:</label>
-                    <input type="text" id="recipeSweet">
+                    <input type="text" id="recipeSweet" class="compact-input">
                 </div>
 
-                <div class="form-group">
+                <div class="form-group full-width">
                     <label for="recipeThumb">缩略图:</label>
-                    <input type="text" id="recipeThumb">
+                    <div class="thumb-input-container">
+                        <input type="text" id="recipeThumb" placeholder="请输入图片URL">
+                        <div id="thumbPreview" class="thumb-preview hidden">
+                            <img id="thumbImage" src="" alt="缩略图预览">
+                        </div>
+                    </div>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group full-width">
                     <label for="recipeVideourl">视频链接:</label>
                     <input type="text" id="recipeVideourl">
                 </div>
 
-                <div class="form-group">
+                <div class="form-group full-width">
                     <label for="recipeSteppic">步骤图片:</label>
                     <input type="text" id="recipeSteppic">
                 </div>
 
-                <div class="form-group">
+                <div class="form-group compact">
                     <label for="recipeUp">点赞数:</label>
-                    <input type="text" id="recipeUp">
+                    <input type="text" id="recipeUp" class="compact-input">
                 </div>
 
-                <div class="form-group">
+                <div class="form-group compact">
                     <label for="recipeViewnum">浏览次数:</label>
-                    <input type="text" id="recipeViewnum">
+                    <input type="text" id="recipeViewnum" class="compact-input">
                 </div>
 
-                <div class="form-group">
+                <div class="form-group compact">
                     <label for="recipeFavnum">收藏次数:</label>
-                    <input type="text" id="recipeFavnum">
+                    <input type="text" id="recipeFavnum" class="compact-input">
                 </div>
 
-                <div class="form-group">
+                <div class="form-group compact">
                     <label for="recipeOutdate">过期时间:</label>
-                    <input type="text" id="recipeOutdate">
+                    <input type="text" id="recipeOutdate" class="compact-input">
                 </div>
 
-                <div class="form-group">
+                <div class="form-group compact">
                     <label for="recipeStatus">状态:</label>
-                    <input type="text" id="recipeStatus">
+                    <input type="text" id="recipeStatus" class="compact-input">
                 </div>
 
                 <button type="submit" id="saveButton">保存修改</button>

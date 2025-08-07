@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('searchInput');
     const searchButton = document.getElementById('searchButton');
+    const clearButton = document.getElementById('clearButton');
     const editForm = document.getElementById('editForm');
     const recipeIdInput = document.getElementById('recipeId');
     const recipeTitleInput = document.getElementById('recipeTitle');
@@ -30,8 +31,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const recipeOutdateInput = document.getElementById('recipeOutdate');
     const recipeStatusInput = document.getElementById('recipeStatus');
     const messageElement = document.getElementById('message');
+    const thumbPreview = document.getElementById('thumbPreview');
+    const thumbImage = document.getElementById('thumbImage');
 
     let currentRecipe = null;
+
+    // 缩略图预览功能
+    const updateThumbPreview = (url) => {
+        if (url && url.trim()) {
+            thumbImage.src = url.trim();
+            thumbImage.onload = () => {
+                thumbPreview.classList.remove('hidden');
+            };
+            thumbImage.onerror = () => {
+                thumbPreview.classList.add('hidden');
+            };
+        } else {
+            thumbPreview.classList.add('hidden');
+        }
+    };
+
+    // 监听缩略图输入框变化
+    recipeThumbInput.addEventListener('input', (e) => {
+        updateThumbPreview(e.target.value);
+    });
 
     const displayMessage = (msg, type) => {
         messageElement.textContent = msg;
@@ -86,6 +109,9 @@ document.addEventListener('DOMContentLoaded', () => {
             recipeOutdateInput.value = recipe.outdate;
             recipeStatusInput.value = recipe.status;
             currentRecipe = recipe;
+            
+            // 更新缩略图预览
+            updateThumbPreview(recipe.thumb);
         } else {
             // Clear edit form
             recipeIdInput.value = '';
@@ -116,6 +142,9 @@ document.addEventListener('DOMContentLoaded', () => {
             recipeOutdateInput.value = '';
             recipeStatusInput.value = '';
             currentRecipe = null;
+            
+            // 隐藏缩略图预览
+            thumbPreview.classList.add('hidden');
         }
     };
 
@@ -143,13 +172,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 displayRecipe(foundRecipe);
                 displayMessage('菜谱加载成功！', 'success');
             } else {
-                displayRecipe(null);
                 displayMessage('未找到匹配的菜谱，请检查ID或标题', 'error');
             }
         } catch (error) {
             console.error('Error searching for recipe:', error);
             displayMessage('搜索失败，请检查服务器连接', 'error');
-            displayRecipe(null);
         } finally {
             // 恢复按钮状态
             searchButton.disabled = false;
@@ -164,6 +191,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Enter') {
             performSearch();
         }
+    });
+
+    // 清空表单按钮事件
+    clearButton.addEventListener('click', () => {
+        displayRecipe(null);
+        displayMessage('表单已清空，可以添加新菜品', 'success');
     });
 
     editForm.addEventListener('submit', async (event) => {

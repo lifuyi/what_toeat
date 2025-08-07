@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { DishCard } from './DishCard';
 import { DishDetailDialog } from './DishDetailDialog';
 import { Preferences } from './RadarController';
-import { getRecommendedRecipes, convertRecipeToDish, type Recipe } from '../services/api';
+import { getRecommendedRecipes, searchRecipes, convertRecipeToDish, type Recipe } from '../services/api';
 
 export interface Dish {
   id: string;
@@ -251,6 +251,7 @@ export function DishRecommendation({
   const [dishes, setDishes] = useState<(Dish & { matchScore: number })[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentSearchTerm, setCurrentSearchTerm] = useState<string | null>(null);
 
   // 计算菜品匹配度
   const calculateMatchScore = (dish: Dish): number => {
@@ -284,12 +285,24 @@ export function DishRecommendation({
       setLoading(true);
       setError(null);
       
-      const recipes = await getRecommendedRecipes(preferences);
+      // 检查是否有食材搜索
+      const ingredientSearch = localStorage.getItem('ingredientSearch');
+      setCurrentSearchTerm(ingredientSearch);
+      let recipes;
+      
+      if (ingredientSearch) {
+        // 使用食材搜索API
+        recipes = await searchRecipes(ingredientSearch);
+      } else {
+        // 使用偏好推荐API
+        recipes = await getRecommendedRecipes(preferences);
+      }
+      
       const convertedDishes = recipes
         .map(recipe => convertRecipeToDish(recipe))
         .map(dish => ({
           ...dish,
-          matchScore: calculateMatchScore(dish)
+          matchScore: ingredientSearch ? 100 : calculateMatchScore(dish) // 食材搜索结果给满分
         }))
         .slice(0, 9);
       
@@ -298,14 +311,35 @@ export function DishRecommendation({
       console.error('Error fetching recommendations:', err);
       setError('获取推荐菜品失败，请稍后重试');
       
-      // Fallback to mock data if API fails
-      const fallbackDishes = mockDishes
-        .map(dish => ({
-          ...dish,
-          matchScore: calculateMatchScore(dish)
-        }))
-        .sort((a, b) => b.matchScore - a.matchScore)
-        .slice(0, 9);
+      // 检查是否有食材搜索
+      const ingredientSearch = localStorage.getItem('ingredientSearch');
+      let fallbackDishes;
+      
+      if (ingredientSearch) {
+        // 在mock数据中搜索包含该食材的菜品
+        fallbackDishes = mockDishes
+          .filter(dish => 
+            dish.ingredients.some(ingredient => 
+              ingredient.toLowerCase().includes(ingredientSearch.toLowerCase())
+            ) ||
+            dish.name.toLowerCase().includes(ingredientSearch.toLowerCase()) ||
+            dish.description.toLowerCase().includes(ingredientSearch.toLowerCase())
+          )
+          .map(dish => ({
+            ...dish,
+            matchScore: 100
+          }))
+          .slice(0, 9);
+      } else {
+        // Fallback to mock data if API fails
+        fallbackDishes = mockDishes
+          .map(dish => ({
+            ...dish,
+            matchScore: calculateMatchScore(dish)
+          }))
+          .sort((a, b) => b.matchScore - a.matchScore)
+          .slice(0, 9);
+      }
       
       setDishes(fallbackDishes);
     } finally {
@@ -355,8 +389,20 @@ export function DishRecommendation({
       <Card className="w-full h-fit bg-gradient-to-br from-white/90 to-purple-50/90 backdrop-blur-sm border-2 border-purple-200 shadow-xl">
         <CardHeader className="pb-4">
           <CardTitle className="text-center sm:text-left bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent flex items-center gap-2">
-            <span className="text-2xl animate-bounce">🎯</span>
-            专属推荐菜品
+            {currentSearchTerm ? (
+              <>
+                <span className="text-2xl animate-bounce">🔍</span>
+                食材搜索结果
+                <span className="text-sm bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
+                  "{currentSearchTerm}"
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="text-2xl animate-bounce">🎯</span>
+                专属推荐菜品
+              </>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>

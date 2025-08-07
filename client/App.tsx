@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { PresetButtons } from './components/PresetButtons';
+import { IngredientSearch } from './components/IngredientSearch';
 import { RadarController, Preferences } from './components/RadarController';
 import { DishRecommendation } from './components/DishRecommendation';
 
@@ -14,6 +15,7 @@ export default function App() {
     spicy: 5,
   });
   const [fetchTrigger, setFetchTrigger] = useState(0);
+  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
 
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [shouldUpdateRadarFromRecommendations, setShouldUpdateRadarFromRecommendations] = useState(false);
@@ -28,6 +30,33 @@ export default function App() {
     setShouldUpdateRadarFromRecommendations(true);
     setFetchTrigger(prev => prev + 1); // Increment trigger to force re-fetch
   };
+
+  const handlePreferencesChange = (newPreferences: Preferences) => {
+    setPreferences(newPreferences);
+    
+    // 清除之前的定时器
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+    }
+    
+    // 设置新的定时器，300ms后触发搜索（减少延迟提升响应性）
+    const timer = setTimeout(() => {
+      // 清除食材搜索，因为现在是基于偏好的推荐
+      localStorage.removeItem('ingredientSearch');
+      setFetchTrigger(prev => prev + 1);
+    }, 300);
+    
+    setDebounceTimer(timer);
+  };
+
+  // 组件卸载时清理定时器
+  useEffect(() => {
+    return () => {
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+    };
+  }, [debounceTimer]);
 
   return (
     <div className={`min-h-screen transition-all duration-500 ${isDarkMode ? 'dark' : ''}`}>
@@ -45,6 +74,9 @@ export default function App() {
           onRandomRecommend={() => setFetchTrigger(prev => prev + 1)}
         />
 
+        {/* 食材搜索 */}
+        <IngredientSearch onSearch={() => setFetchTrigger(prev => prev + 1)} />
+
         {/* 主要内容区域 */}
         <div className="space-y-8 lg:space-y-12">
           {/* 控制面板和推荐区域 */}
@@ -53,7 +85,7 @@ export default function App() {
             <div className="lg:col-span-2">
               <RadarController
                 preferences={preferences}
-                onPreferencesChange={setPreferences}
+                onPreferencesChange={handlePreferencesChange}
               />
             </div>
             
