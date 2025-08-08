@@ -12,6 +12,13 @@ interface DishDetailDialogProps {
 export function DishDetailDialog({ dish, isOpen, onClose }: DishDetailDialogProps) {
   if (!dish) return null;
 
+  const getDifficultyString = (score: number): string => {
+    if (score <= 1) return '简单';
+    if (score === 2) return '中等';
+    if (score === 3) return '困难';
+    return '未知'; // Fallback for unexpected scores
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[95vw] w-full max-h-[90vh] sm:max-w-3xl bg-gradient-to-br from-white/95 to-blue-50/95 backdrop-blur-sm border-2 border-blue-200">
@@ -33,20 +40,25 @@ export function DishDetailDialog({ dish, isOpen, onClose }: DishDetailDialogProp
             
             {/* 标签 */}
             <div className="flex flex-wrap gap-2">
-              {dish.tags.map((tag, index) => (
-                <Badge 
-                  key={tag} 
-                  className={`
-                    text-sm px-3 py-1 border-0 text-white
-                    ${index % 2 === 0 
-                      ? 'bg-gradient-to-r from-purple-500 to-pink-500' 
-                      : 'bg-gradient-to-r from-blue-500 to-cyan-500'
-                    }
-                  `}
-                >
-                  {tag}
-                </Badge>
-              ))}
+              {dish.tags
+                .filter(tag => !['简单', '中等', '困难', '容易', '难'].includes(tag))
+                .map((tag, index) => (
+                  <Badge
+                    key={tag}
+                    className={`
+                      text-sm px-3 py-1 border-0 text-white
+                      ${
+                        tag === '素食'
+                          ? 'bg-gradient-to-r from-emerald-300 to-emerald-400'
+                          : index % 2 === 0
+                          ? 'bg-gradient-to-r from-purple-500 to-pink-500'
+                          : 'bg-gradient-to-r from-blue-500 to-cyan-500'
+                      }
+                    `}
+                  >
+                    {tag}
+                  </Badge>
+                ))}
             </div>
 
             {/* 基本信息 */}
@@ -67,7 +79,7 @@ export function DishDetailDialog({ dish, isOpen, onClose }: DishDetailDialogProp
                   <span className="text-sm text-orange-700">难度等级</span>
                 </div>
                 <span className="text-lg bg-gradient-to-r from-orange-700 to-red-700 bg-clip-text text-transparent">
-                  {dish.difficulty}
+                  {getDifficultyString(dish.scores.difficulty)}
                 </span>
               </div>
             </div>

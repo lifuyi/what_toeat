@@ -46,6 +46,69 @@ const DishCardComponent = React.forwardRef<HTMLDivElement, DishCardProps>(
         onClick();
       }
     };
+
+    // Difficulty calculation function (same as in DishDetailDialog)
+    const getDifficultyString = (score: number): string => {
+      if (score <= 1) return '简单';
+      if (score === 2) return '中等';
+      if (score === 3) return '困难';
+      return '未知'; // Fallback for unexpected scores
+    };
+
+    // Create difficulty badge and combine with filtered tags
+    const difficultyKeywords = ['简单', '中等', '困难', '容易', '难'];
+    const filteredTags = dish.tags.filter(tag => !difficultyKeywords.includes(tag));
+    
+    const difficultyLevel = getDifficultyString(dish.scores.difficulty);
+    
+    // Create difficulty badge object with custom colors
+    const getDifficultyColor = (level: string): string => {
+      switch (level) {
+        case '简单': return 'from-green-500 to-green-600';
+        case '中等': return 'from-blue-500 to-blue-600';
+        case '困难': return 'from-red-500 to-red-600';
+        default: return 'from-gray-500 to-gray-600';
+      }
+    };
+
+    const difficultyBadge = {
+      text: difficultyLevel,
+      originalText: difficultyLevel,
+      isDifficulty: true,
+      isSpecial: false,
+      color: getDifficultyColor(difficultyLevel)
+    };
+    
+    // Create tag objects with special colors for certain tags
+    const getTagColor = (tagText: string): string => {
+      if (tagText === '素食') {
+        return 'from-emerald-300 to-emerald-400';
+      }
+      if (tagText === '辣') {
+        return 'from-pink-500 to-rose-500';
+      }
+      return '';
+    };
+
+    // Add emoji to special tags
+    const getTagDisplay = (tagText: string): string => {
+      if (tagText === '辣') {
+        return '🌶️ 辣';
+      }
+      return tagText;
+    };
+
+    // Combine difficulty badge with other tags
+    const allTags = [
+      difficultyBadge, 
+      ...filteredTags.map(tag => ({ 
+        text: getTagDisplay(tag),
+        originalText: tag,
+        isDifficulty: false, 
+        isSpecial: tag === '素食' || tag === '辣',
+        color: getTagColor(tag)
+      }))
+    ];
     
     return (
       <Card 
@@ -90,35 +153,35 @@ const DishCardComponent = React.forwardRef<HTMLDivElement, DishCardProps>(
           
           {/* 标签 */}
           <div className="flex flex-wrap gap-1">
-            {dish.tags.slice(0, 3).map((tag, tagIndex) => (
+            {allTags.slice(0, 3).map((tag, tagIndex) => (
               <Badge 
-                key={tag} 
-                variant="secondary" 
+                key={tag.text} 
+                variant="secondary"
                 className={`
                   text-xs transition-all duration-300 hover:scale-110
-                  bg-gradient-to-r ${borderGradients[(gradientIndex + tagIndex) % borderGradients.length]} 
+                  bg-gradient-to-r ${
+                    tag.isDifficulty || tag.isSpecial 
+                      ? tag.color 
+                      : borderGradients[(gradientIndex + tagIndex) % borderGradients.length]
+                  } 
                   text-white border-0
                 `}
               >
-                {tag}
+                {tag.text}
               </Badge>
             ))}
-            {dish.tags.length > 3 && (
+            {allTags.length > 3 && (
               <Badge variant="outline" className="text-xs dark:border-gray-600 dark:text-gray-400 border-gray-300">
-                +{dish.tags.length - 3}
+                +{allTags.length - 3}
               </Badge>
             )}
           </div>
           
-          {/* 时间和难度 */}
+          {/* 制作时间 */}
           <div className="flex justify-between items-center text-sm">
             <span className="flex items-center gap-1 text-emerald-600">
               <span className="animate-pulse">⏱️</span>
               <span>{dish.cookingTime}</span>
-            </span>
-            <span className="flex items-center gap-1 text-orange-600">
-              <span className="animate-pulse">🔥</span>
-              <span>{dish.difficulty}</span>
             </span>
           </div>
         </div>
