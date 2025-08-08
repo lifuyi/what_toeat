@@ -79,7 +79,7 @@ export function convertRecipeToDish(recipe: Recipe) {
   return {
     id: recipe.id.toString(),
     name: recipe.title,
-    description: recipe.desc || '美味佳肴',
+    description: recipe.desc || '美味佳肴\n垂涎欲滴',
     ingredients,
     steps,
     cookingTime: recipe.costtime || '未知',

@@ -25,9 +25,19 @@ app.get("/api/recipes", (req, res) => {
   const params = [];
 
   if (req.query.query) {
-    const searchQuery = `%${req.query.query}%`;
-    sql += ` WHERE title LIKE ? OR id LIKE ?`;
-    params.push(searchQuery, searchQuery);
+    // 支持按空格分词，词与词之间为 OR 关系；每个词在 title/id/yl 字段上进行匹配
+    const raw = String(req.query.query || '').trim();
+    // 兼容全角空格 \u3000
+    const terms = raw.split(/[ \t\r\n\u3000]+/).filter(Boolean);
+
+    if (terms.length > 0) {
+      const termClauses = terms.map(() => "(title LIKE ? OR id LIKE ? OR yl LIKE ?)");
+      sql += " WHERE " + termClauses.join(" OR ");
+      terms.forEach((term) => {
+        const q = `%${term}%`;
+        params.push(q, q, q);
+      });
+    }
   } else if (Object.keys(req.query).length > 0) {
     sql += " WHERE 1=1";
     for (const key in req.query) {

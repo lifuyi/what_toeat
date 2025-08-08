@@ -49,7 +49,7 @@ export function DishDetailDialog({ dish, isOpen, onClose }: DishDetailDialogProp
                       text-sm px-3 py-1 border-0 text-white
                       ${
                         tag === '素食'
-                          ? 'bg-gradient-to-r from-emerald-300 to-emerald-400'
+                          ? 'bg-gradient-to-r from-emerald-300 to-emerald-400 text-emerald-900'
                           : index % 2 === 0
                           ? 'bg-gradient-to-r from-purple-500 to-pink-500'
                           : 'bg-gradient-to-r from-blue-500 to-cyan-500'

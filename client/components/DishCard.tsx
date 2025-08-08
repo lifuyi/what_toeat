@@ -82,7 +82,7 @@ const DishCardComponent = React.forwardRef<HTMLDivElement, DishCardProps>(
     // Create tag objects with special colors for certain tags
     const getTagColor = (tagText: string): string => {
       if (tagText === '素食') {
-        return 'from-emerald-300 to-emerald-400';
+        return 'from-emerald-300 to-emerald-400 text-emerald-900';
       }
       if (tagText === '辣') {
         return 'from-pink-500 to-rose-500';
@@ -146,7 +146,7 @@ const DishCardComponent = React.forwardRef<HTMLDivElement, DishCardProps>(
             <h3 className="line-clamp-1 bg-clip-text text-transparent transition-all duration-300 dark:bg-gradient-to-r dark:from-gray-200 dark:to-gray-400 dark:group-hover:from-purple-400 dark:group-hover:to-blue-400 bg-gradient-to-r from-gray-800 to-gray-600 group-hover:from-purple-600 group-hover:to-blue-600">
               {dish.name}
             </h3>
-            <p className="text-sm line-clamp-2 mt-1 dark:text-gray-400 text-muted-foreground">
+            <p className="text-sm line-clamp-2 mt-1 dark:text-gray-400 text-muted-foreground whitespace-pre-line">
               {dish.description}
             </p>
           </div>
