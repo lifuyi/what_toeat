@@ -68,7 +68,7 @@ app.get("/api/recipes", (req, res) => {
     }
   }
 
-  sql += " LIMIT 20";
+  sql += " LIMIT 12";
 
   db.all(sql, params, (err, rows) => {
     if (err) {
@@ -150,7 +150,7 @@ app.post("/api/recommendations", (req, res) => {
     return res.status(400).json({ error: "Invalid preferences data" });
   }
 
-  // Build SQL query to get recipes with scoring
+  // Build SQL query to get recipes with scoring and randomization
   let sql = `
     SELECT *,
     (
@@ -163,8 +163,8 @@ app.post("/api/recommendations", (req, res) => {
     ) as preference_distance
     FROM recipes 
     WHERE title IS NOT NULL AND title != ''
-    ORDER BY preference_distance ASC
-    LIMIT 10
+    ORDER BY preference_distance ASC, RANDOM()
+    LIMIT 20
   `;
 
   const params = [
@@ -182,7 +182,64 @@ app.post("/api/recommendations", (req, res) => {
       res.status(500).json({ error: err.message });
       return;
     }
-    res.json(rows);
+    
+    // Add diversity by filtering out repeated dishes and shuffling results
+    const diverseResults = [];
+    const seenTitles = new Set();
+    
+    // First, add dishes with different preference distances to ensure variety
+    const distanceGroups = {};
+    rows.forEach(row => {
+      const distance = Math.floor(row.preference_distance);
+      if (!distanceGroups[distance]) {
+        distanceGroups[distance] = [];
+      }
+      distanceGroups[distance].push(row);
+    });
+    
+    // Take at most 2 dishes from each distance group, with special handling for problematic dishes
+    const problematicDishes = ['酸菜猪肉水饺']; // Add dishes that appear too frequently
+    
+    Object.keys(distanceGroups).sort((a, b) => a - b).forEach(distance => {
+      const group = distanceGroups[distance];
+      // Shuffle the group and take up to 2 dishes
+      const shuffled = group.sort(() => Math.random() - 0.5);
+      
+      // For the first distance group, reduce chance of problematic dishes appearing first
+      if (distance === Object.keys(distanceGroups).sort((a, b) => a - b)[0]) {
+        const nonProblematic = shuffled.filter(dish => !problematicDishes.includes(dish.title));
+        const problematic = shuffled.filter(dish => problematicDishes.includes(dish.title));
+        
+        // 70% chance to prioritize non-problematic dishes
+        const finalOrder = Math.random() < 0.7 ? [...nonProblematic, ...problematic] : shuffled;
+        
+        finalOrder.slice(0, 2).forEach(dish => {
+          if (diverseResults.length < 12 && !seenTitles.has(dish.title)) {
+            diverseResults.push(dish);
+            seenTitles.add(dish.title);
+          }
+        });
+      } else {
+        shuffled.slice(0, 2).forEach(dish => {
+          if (diverseResults.length < 12 && !seenTitles.has(dish.title)) {
+            diverseResults.push(dish);
+            seenTitles.add(dish.title);
+          }
+        });
+      }
+    });
+    
+    // If we still need more dishes, add remaining ones
+    if (diverseResults.length < 12) {
+      rows.forEach(row => {
+        if (diverseResults.length < 12 && !seenTitles.has(row.title)) {
+          diverseResults.push(row);
+          seenTitles.add(row.title);
+        }
+      });
+    }
+    
+    res.json(diverseResults.slice(0, 12));
   });
 });
 
