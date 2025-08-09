@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const sqlite3 = require("sqlite3").verbose();
+const fs = require("fs");
+const path = require("path");
 
 const app = express();
 const port = 3001;
@@ -8,8 +10,56 @@ const port = 3001;
 app.use(cors()); // Enable CORS for all routes
 app.use(express.json()); // Middleware to parse JSON request bodies
 
+// 创建日志目录
+const logsDir = path.join(__dirname, 'logs');
+if (!fs.existsSync(logsDir)) {
+  fs.mkdirSync(logsDir);
+}
+
+// 日志记录中间件
+app.use((req, res, next) => {
+  const timestamp = new Date().toISOString();
+  const logEntry = {
+    timestamp,
+    method: req.method,
+    url: req.url,
+    ip: req.ip || req.connection.remoteAddress,
+    userAgent: req.get('User-Agent'),
+    query: req.query,
+    body: req.body,
+    headers: {
+      'content-type': req.get('Content-Type'),
+      'accept': req.get('Accept'),
+      'referer': req.get('Referer')
+    }
+  };
+
+  // 打印到控制台
+  console.log(`[${timestamp}] ${req.method} ${req.url} - IP: ${logEntry.ip}`);
+  if (Object.keys(req.query).length > 0) {
+    console.log(`  Query:`, req.query);
+  }
+  if (req.body && Object.keys(req.body).length > 0) {
+    console.log(`  Body:`, req.body);
+  }
+
+  // 保存到当天的日志文件（每天一个文件，多条记录）
+  const logFileName = `requests-${new Date().toISOString().split('T')[0]}.log`;
+  const logFilePath = path.join(logsDir, logFileName);
+  
+  // 将日志条目追加到文件中，每条记录一行
+  const logLine = JSON.stringify(logEntry) + '\n';
+  
+  fs.appendFile(logFilePath, logLine, (err) => {
+    if (err) {
+      console.error('Error writing to log file:', err);
+    }
+  });
+
+  next();
+});
+
 // Connect to SQLite database
-const path = require('path');
 const dbPath = path.join(__dirname, 'caipu.db');
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
@@ -82,9 +132,11 @@ app.get("/api/recipes", (req, res) => {
 
   db.all(sql, params, (err, rows) => {
     if (err) {
+      console.error('Database query error:', err.message);
       res.status(500).json({ error: err.message });
       return;
     }
+    console.log(`  Response: ${rows.length} recipes found`);
     res.json(rows);
   });
 });
@@ -133,6 +185,7 @@ app.put("/api/recipes/:id", (req, res) => {
       return;
     }
     if (this.changes === 0) {
+      console.log(`  Response: Recipe ${id} not found or no changes made`);
       res.status(404).json({ message: "Recipe not found or no changes made." });
     } else {
       // 返回更新后的数据
@@ -141,6 +194,7 @@ app.put("/api/recipes/:id", (req, res) => {
           res.status(500).json({ error: err.message });
           return;
         }
+        console.log(`  Response: Recipe ${id} updated successfully`);
         res.json({
           message: "Recipe updated successfully",
           changes: this.changes,
@@ -249,6 +303,7 @@ app.post("/api/recommendations", (req, res) => {
       });
     }
     
+    console.log(`  Response: ${diverseResults.length} recommendations generated`);
     res.json(diverseResults.slice(0, 12));
   });
 });
@@ -258,7 +313,40 @@ app.get("/", (req, res) => {
   res.send("Welcome to the Caipu API! Try /api/recipes or /api/recommendations");
 });
 
+// 添加日志查看端点
+app.get("/api/logs", (req, res) => {
+  const date = req.query.date || new Date().toISOString().split('T')[0];
+  const logFileName = `requests-${date}.log`;
+  const logFilePath = path.join(logsDir, logFileName);
+  
+  if (!fs.existsSync(logFilePath)) {
+    return res.status(404).json({ error: "Log file not found for the specified date" });
+  }
+  
+  fs.readFile(logFilePath, 'utf8', (err, data) => {
+    if (err) {
+      return res.status(500).json({ error: "Error reading log file" });
+    }
+    
+    const logs = data.trim().split('\n').filter(line => line).map(line => {
+      try {
+        return JSON.parse(line);
+      } catch (e) {
+        return { error: "Invalid log entry", raw: line };
+      }
+    });
+    
+    res.json({
+      date,
+      totalRequests: logs.length,
+      logs
+    });
+  });
+});
+
 // Start the server
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
+  console.log(`Daily logs will be saved to: ${logsDir}`);
+  console.log(`Log format: One file per day (requests-YYYY-MM-DD.log), multiple requests per file`);
 });
