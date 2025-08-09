@@ -18,7 +18,6 @@ export default function App() {
     spicy: 5,
   });
   const [fetchTrigger, setFetchTrigger] = useState(0);
-  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
 
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // 从localStorage读取深色模式设置
@@ -51,20 +50,9 @@ export default function App() {
 
   const handlePreferencesChange = (newPreferences: Preferences) => {
     setPreferences(newPreferences);
-    
-    // 清除之前的定时器
-    if (debounceTimer) {
-      clearTimeout(debounceTimer);
-    }
-    
-    // 设置新的定时器，300ms后触发搜索（减少延迟提升响应性）
-    const timer = setTimeout(() => {
-      // 清除食材搜索，因为现在是基于偏好的推荐
-      localStorage.removeItem('ingredientSearch');
-      setFetchTrigger(prev => prev + 1);
-    }, 300);
-    
-    setDebounceTimer(timer);
+    // 推荐只在用户需要时触发搜索；这里仅切换回推荐模式并刷新
+    localStorage.removeItem('ingredientSearch');
+    setFetchTrigger(prev => prev + 1);
   };
 
   // 初始化深色模式
@@ -76,14 +64,7 @@ export default function App() {
     }
   }, []);
 
-  // 组件卸载时清理定时器
-  useEffect(() => {
-    return () => {
-      if (debounceTimer) {
-        clearTimeout(debounceTimer);
-      }
-    };
-  }, [debounceTimer]);
+  // 无需定时器清理
 
   return (
     <div className={`min-h-screen transition-all duration-500 ${isDarkMode ? 'dark' : ''}`}>
