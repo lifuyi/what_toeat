@@ -153,5 +153,62 @@ export const mockDishes: Dish[] = [
     tags: ['甜品', '荤菜', '糖醋'],
     category: '家常菜',
     scores: { healthy: 5, simple: 5, difficulty: 6, quick: 4, vegetarian: 1, spicy: 0 }
+  },
+  {
+    id: '9',
+    name: '鸡蛋豆腐羹',
+    description: '嫩滑鲜美，营养丰富的家常汤品',
+    ingredients: ['鸡蛋 2个', '嫩豆腐 200g', '香菇 3朵', '胡萝卜丝 适量', '葱花 适量', '盐 适量', '香油 几滴', '生抽 1勺'],
+    steps: [
+      '豆腐切小块，香菇切片',
+      '鸡蛋打散备用',
+      '锅中加水烧开，放入豆腐块',
+      '加入香菇片和胡萝卜丝煮3分钟',
+      '缓慢倒入蛋液，边倒边搅拌成蛋花',
+      '调味后撒葱花，淋香油即可'
+    ],
+    cookingTime: '15分钟',
+    difficulty: '简单',
+    tags: ['汤羹', '嫩滑', '营养', '清淡'],
+    category: '汤品',
+    scores: { healthy: 9, simple: 8, difficulty: 2, quick: 8, vegetarian: 7, spicy: 0 }
+  },
+  {
+    id: '10',
+    name: '豆腐鸡蛋饼',
+    description: '香嫩可口，营养均衡的创意煎饼',
+    ingredients: ['鸡蛋 3个', '嫩豆腐 150g', '面粉 50g', '胡萝卜丁 适量', '韭菜末 适量', '盐 适量', '胡椒粉 少许'],
+    steps: [
+      '豆腐压碎成泥状',
+      '鸡蛋打散，加入豆腐泥拌匀',
+      '加入面粉、胡萝卜丁、韭菜末',
+      '调味拌成无颗粒的糊状',
+      '平底锅刷油，倒入蛋糊摊成饼',
+      '小火煎至两面金黄即可'
+    ],
+    cookingTime: '20分钟',
+    difficulty: '简单',
+    tags: ['煎饼', '营养', '创意', '素食'],
+    category: '主食',
+    scores: { healthy: 8, simple: 7, difficulty: 3, quick: 7, vegetarian: 8, spicy: 0 }
+  },
+  {
+    id: '11',
+    name: '鸡蛋炒豆腐',
+    description: '简单下饭的家常炒菜',
+    ingredients: ['鸡蛋 2个', '老豆腐 300g', '青椒 1个', '红椒 半个', '葱花 适量', '生抽 2勺', '盐 适量', '糖 少许'],
+    steps: [
+      '豆腐切块，青红椒切丁',
+      '鸡蛋打散炒熟盛起',
+      '锅中放油，下豆腐块煎至微黄',
+      '加入青红椒丁炒匀',
+      '倒入炒蛋翻炒',
+      '调味炒匀，撒葱花即可'
+    ],
+    cookingTime: '15分钟',
+    difficulty: '简单',
+    tags: ['家常', '下饭', '营养', '素食'],
+    category: '家常菜',
+    scores: { healthy: 8, simple: 8, difficulty: 2, quick: 8, vegetarian: 8, spicy: 1 }
   }
 ];

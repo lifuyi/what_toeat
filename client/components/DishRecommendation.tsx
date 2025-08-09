@@ -310,7 +310,58 @@ const DishRecommendationComponent = ({
         }))
         .slice(0, 9);
       
-      setDishes(convertedDishes);
+      // 过滤API搜索结果，只保留真正匹配的菜品
+      let filteredApiResults = convertedDishes;
+      if (ingredientSearch && convertedDishes.length > 0) {
+        const searchTerms = ingredientSearch.split(/\s+/).filter(term => term.trim());
+        
+        filteredApiResults = convertedDishes.filter(dish => {
+          return searchTerms.every(term => {
+            const lowerTerm = term.toLowerCase();
+            const ingredientMatch = dish.ingredients.some(ingredient => 
+              ingredient.toLowerCase().includes(lowerTerm)
+            );
+            const nameMatch = dish.name.toLowerCase().includes(lowerTerm);
+            const descMatch = dish.description.toLowerCase().includes(lowerTerm);
+            const tagMatch = dish.tags && dish.tags.some(tag => 
+              tag.toLowerCase().includes(lowerTerm)
+            );
+            
+            return ingredientMatch || nameMatch || descMatch || tagMatch;
+          });
+        });
+      }
+      
+      // 如果API搜索结果为空或过滤后无匹配，使用mock数据
+      if (ingredientSearch && filteredApiResults.length === 0) {
+        const searchTerms = ingredientSearch.split(/\s+/).filter(term => term.trim());
+        
+        const mockResults = mockDishes
+          .filter(dish => {
+            return searchTerms.every(term => {
+              const lowerTerm = term.toLowerCase();
+              return (
+                dish.ingredients.some(ingredient => 
+                  ingredient.toLowerCase().includes(lowerTerm)
+                ) ||
+                dish.name.toLowerCase().includes(lowerTerm) ||
+                dish.description.toLowerCase().includes(lowerTerm) ||
+                dish.tags.some(tag => 
+                  tag.toLowerCase().includes(lowerTerm)
+                )
+              );
+            });
+          })
+          .map(dish => ({
+            ...dish,
+            matchScore: 100
+          }))
+          .slice(0, 9);
+          
+        setDishes(mockResults);
+      } else {
+        setDishes(filteredApiResults);
+      }
     } catch (err) {
       console.error('Error fetching recommendations:', err);
       setError('获取推荐菜品失败，请稍后重试');
@@ -320,15 +371,36 @@ const DishRecommendationComponent = ({
       let fallbackDishes;
       
       if (ingredientSearch) {
-        // 在mock数据中搜索包含该食材的菜品
+        // 在mock数据中搜索包含该食材的菜品 - 支持多关键词搜索
+        const searchTerms = ingredientSearch.split(/\s+/).filter(term => term.trim());
         fallbackDishes = mockDishes
-          .filter(dish => 
-            dish.ingredients.some(ingredient => 
-              ingredient.toLowerCase().includes(ingredientSearch.toLowerCase())
-            ) ||
-            dish.name.toLowerCase().includes(ingredientSearch.toLowerCase()) ||
-            dish.description.toLowerCase().includes(ingredientSearch.toLowerCase())
-          )
+          .filter(dish => {
+            // 智能搜索：每个关键词都必须在菜品信息中找到匹配 (AND关系)
+            return searchTerms.every(term => {
+              const lowerTerm = term.toLowerCase();
+              return (
+                dish.ingredients.some(ingredient => 
+                  ingredient.toLowerCase().includes(lowerTerm)
+                ) ||
+                dish.name.toLowerCase().includes(lowerTerm) ||
+                dish.description.toLowerCase().includes(lowerTerm) ||
+                dish.tags.some(tag => 
+                  tag.toLowerCase().includes(lowerTerm)
+                ) ||
+                // 支持部分匹配和同义词
+                dish.ingredients.some(ingredient => {
+                  const lowerIngredient = ingredient.toLowerCase();
+                  return (
+                    (lowerTerm === '蛋' && lowerIngredient.includes('鸡蛋')) ||
+                    (lowerTerm === '鸡蛋' && lowerIngredient.includes('蛋')) ||
+                    (lowerTerm === '豆腐' && lowerIngredient.includes('豆腐')) ||
+                    lowerIngredient.includes(lowerTerm.slice(0, -1)) // 部分匹配
+                  );
+                }) ||
+                dish.name.toLowerCase().includes(lowerTerm.slice(0, -1))
+              );
+            });
+          })
           .map(dish => ({
             ...dish,
             matchScore: 100

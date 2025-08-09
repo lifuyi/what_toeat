@@ -73,8 +73,16 @@ const PresetButtonsComponent = ({ onPresetSelect, onRandomRecommend }: PresetBut
     };
   };
 
+  const handlePresetSelect = (preferences: Preferences) => {
+    // 清除搜索状态，切换到偏好推荐模式
+    localStorage.removeItem('ingredientSearch');
+    onPresetSelect(preferences);
+  };
+
   const handleRandomRecommend = () => {
     const randomPreferences = generateRandomPreferences();
+    // 清除搜索状态，切换到偏好推荐模式
+    localStorage.removeItem('ingredientSearch');
     onPresetSelect(randomPreferences);
     if (onRandomRecommend) {
       onRandomRecommend();
@@ -90,7 +98,7 @@ const PresetButtonsComponent = ({ onPresetSelect, onRandomRecommend }: PresetBut
           <Button
             key={preset.name}
             variant="outline"
-            onClick={() => onPresetSelect(preset.preferences)}
+            onClick={() => handlePresetSelect(preset.preferences)}
             className={`
               relative h-auto p-3 bg-gradient-to-br ${preset.gradient} 
               text-white border-0 hover:scale-105 transform transition-all duration-300

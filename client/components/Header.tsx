@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from './ui/button';
 import { Sparkles, Sun, Moon } from 'lucide-react';
+import { DateInfo } from './DateInfo';
 
 interface HeaderProps {
   isDark?: boolean;
@@ -8,6 +9,22 @@ interface HeaderProps {
 }
 
 export function Header({ isDark = false, onThemeToggle }: HeaderProps) {
+  // 根据时间动态生成标题
+  const getTimeBasedTitle = () => {
+    const now = new Date();
+    const hour = now.getHours();
+    
+    if (hour < 10) {
+      return { greeting: '早上好', meal: '早餐' };
+    } else if (hour >= 10 && hour < 16) {
+      return { greeting: '中午好', meal: '午餐' };
+    } else {
+      return { greeting: '晚上好', meal: '晚餐' };
+    }
+  };
+  
+  const { greeting, meal } = getTimeBasedTitle();
+
   return (
     <div className="text-center mb-8 sm:mb-12 relative">
       {/* 背景装饰 */}
@@ -28,7 +45,7 @@ export function Header({ isDark = false, onThemeToggle }: HeaderProps) {
               ? 'bg-gradient-to-r from-blue-400 via-purple-400 to-emerald-400'
               : 'bg-gradient-to-r from-blue-600 via-purple-600 to-emerald-600'
           }`}>
-            今天吃什么？
+            {greeting}，{meal}吃什么？
           </h1>
           <div className="animate-float" style={{ animationDelay: '1s' }}>
             <span className="text-3xl">🍽️</span>
@@ -36,7 +53,7 @@ export function Header({ isDark = false, onThemeToggle }: HeaderProps) {
         </div>
         
         {/* 副标题 */}
-        <p className={`text-sm sm:text-lg max-w-2xl mx-auto mb-6 ${
+        <p className={`text-sm sm:text-lg max-w-2xl mx-auto mb-2 ${
           isDark ? 'text-gray-300' : 'text-muted-foreground'
         }`}>
           <span className={`bg-clip-text text-transparent ${
@@ -47,6 +64,11 @@ export function Header({ isDark = false, onThemeToggle }: HeaderProps) {
             调整你的口味偏好，获取个性化菜品推荐
           </span>
         </p>
+        
+        {/* 日期信息 */}
+        <div className="mb-6">
+          <DateInfo />
+        </div>
         
         {/* 装饰性标签 */}
         <div className="flex flex-wrap items-center justify-center gap-2 mb-4">

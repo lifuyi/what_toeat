@@ -41,7 +41,7 @@ export function DishDetailDialog({ dish, isOpen, onClose }: DishDetailDialogProp
             {/* 标签 */}
             <div className="flex flex-wrap gap-2">
               {dish.tags
-                .filter(tag => !['简单', '中等', '困难', '容易', '难'].includes(tag))
+                .filter(tag => !['简单', '中等', '困难', '容易', '难', 'tip'].includes(tag))
                 .map((tag, index) => (
                   <Badge
                     key={tag}

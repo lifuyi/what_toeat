@@ -66,12 +66,22 @@ export function convertRecipeToDish(recipe: Recipe) {
   if (recipe.制作速度 >= 7) tags.push('快手');
   if (recipe.辛辣程度 >= 7) tags.push('辣');
   if (recipe.制作难易 <= 3) tags.push('简单');
-  if (recipe.fl) tags.push(recipe.fl);
+  
+  // Add tags from yl field (first 3 items split by # as one combined badge with '等')
+  if (recipe.yl) {
+    const ylItems = recipe.yl.split('#').filter(item => item.trim()).slice(0, 3);
+    if (ylItems.length > 0) {
+      tags.push(ylItems.join(' ') + '等');
+    }
+  }
 
   // Add category from database
   let category = '家常菜';
-  if (recipe.fl) {
-    category = recipe.fl;
+  if (recipe.yl) {
+    const ylItems = recipe.yl.split('#').filter(item => item.trim());
+    if (ylItems.length > 0) {
+      category = ylItems[0]; // Use first item as category
+    }
   } else if (recipe.zid) {
     category = recipe.zid;
   }
@@ -118,10 +128,57 @@ export async function searchRecipes(query: string): Promise<Recipe[]> {
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    return await response.json();
+    const results = await response.json();
+    
+    // 如果API返回空结果，尝试获取所有数据并在前端搜索
+    if (!results || results.length === 0) {
+      const allRecipes = await fetchRecipes();
+      const searchTerms = query.split(/\s+/).filter(term => term.trim());
+      
+      return allRecipes.filter(recipe => {
+        // 智能搜索：每个关键词都必须在菜品信息中找到匹配
+        return searchTerms.every(term => {
+          const lowerTerm = term.toLowerCase();
+          return (
+            (recipe.title && recipe.title.toLowerCase().includes(lowerTerm)) ||
+            (recipe.desc && recipe.desc.toLowerCase().includes(lowerTerm)) ||
+            (recipe.yl && recipe.yl.toLowerCase().includes(lowerTerm)) ||
+            (recipe.fl && recipe.fl.toLowerCase().includes(lowerTerm)) ||
+            // 支持部分匹配，如"蛋"匹配"鸡蛋"
+            (recipe.title && recipe.title.toLowerCase().includes(lowerTerm.slice(0, -1))) ||
+            (recipe.yl && recipe.yl.toLowerCase().includes(lowerTerm.slice(0, -1)))
+          );
+        });
+      });
+    }
+    
+    return results;
   } catch (error) {
     console.error('Error searching recipes:', error);
-    throw error;
+    // 如果API完全失败，尝试获取所有数据并在前端搜索
+    try {
+      const allRecipes = await fetchRecipes();
+      const searchTerms = query.split(/\s+/).filter(term => term.trim());
+      
+      return allRecipes.filter(recipe => {
+        // 智能搜索：每个关键词都必须在菜品信息中找到匹配
+        return searchTerms.every(term => {
+          const lowerTerm = term.toLowerCase();
+          return (
+            (recipe.title && recipe.title.toLowerCase().includes(lowerTerm)) ||
+            (recipe.desc && recipe.desc.toLowerCase().includes(lowerTerm)) ||
+            (recipe.yl && recipe.yl.toLowerCase().includes(lowerTerm)) ||
+            (recipe.fl && recipe.fl.toLowerCase().includes(lowerTerm)) ||
+            // 支持部分匹配，如"蛋"匹配"鸡蛋"
+            (recipe.title && recipe.title.toLowerCase().includes(lowerTerm.slice(0, -1))) ||
+            (recipe.yl && recipe.yl.toLowerCase().includes(lowerTerm.slice(0, -1)))
+          );
+        });
+      });
+    } catch (fallbackError) {
+      console.error('Fallback search also failed:', fallbackError);
+      throw error;
+    }
   }
 }
 
