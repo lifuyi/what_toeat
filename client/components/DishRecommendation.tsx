@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { DishCard } from './DishCard';
 import { DishDetailDialog } from './DishDetailDialog';
@@ -17,11 +17,10 @@ export interface Dish {
   category?: string;
   scores: {
     healthy: number;
-    simple: number;
     difficulty: number;
-    quick: number;
     vegetarian: number;
     spicy: number;
+    sweetness: number;
   };
 }
 
@@ -33,16 +32,12 @@ import { mockDishes } from '../data/mockDishes';
 interface DishRecommendationProps {
   preferences: Preferences;
   onPreferencesChange?: (preferences: Preferences) => void;
-  shouldUpdateRadar?: boolean;
-  onRadarUpdated?: () => void;
   fetchTrigger: number; // Add fetchTrigger prop
 }
 
 const DishRecommendationComponent = ({
   preferences,
   onPreferencesChange,
-  shouldUpdateRadar = false,
-  onRadarUpdated,
   fetchTrigger
 }: DishRecommendationProps) => {
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
@@ -56,11 +51,10 @@ const DishRecommendationComponent = ({
   const calculateMatchScore = useMemo(() => (dish: Dish): number => {
     const weights = {
       healthy: 1,
-      simple: 1,
-      difficulty: -1,
-      quick: 1,
+      difficulty: 1,
       vegetarian: 1,
-      spicy: 1
+      spicy: 1,
+      sweetness: 1
     };
 
     let score = 0;
@@ -75,14 +69,46 @@ const DishRecommendationComponent = ({
       }
     });
 
-    return Math.round((score / 60) * 100);
+    return Math.round((score / 50) * 100);
   }, [preferences]);
 
+  // 根据偏好加入受控随机性，提升多样性
+  const diversifyDishes = useCallback(
+    (input: (Dish & { matchScore: number })[], options?: { alpha?: number; limit?: number }) => {
+      const alpha = options?.alpha ?? 0.35; // 0=完全按分数，1=完全随机
+      const limit = options?.limit ?? 12;
+      // 为每道菜添加抖动分数，再排序
+      const withJitter = input.map(dish => {
+        const noise = Math.random() * 100; // 0-100 噪声
+        const blended = dish.matchScore * (1 - alpha) + noise * alpha;
+        return { dish, blended };
+      });
+      withJitter.sort((a, b) => b.blended - a.blended);
+      // 轻度洗牌以避免稳定排序带来的相似度
+      for (let i = withJitter.length - 1; i > 0; i--) {
+        if (Math.random() < 0.15) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [withJitter[i], withJitter[j]] = [withJitter[j], withJitter[i]];
+        }
+      }
+      return withJitter.slice(0, limit).map(x => x.dish);
+    },
+    []
+  );
+
   // 获取推荐菜品 - 使用 useCallback 优化
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   const fetchRecommendedDishes = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
+      // cancel previous in-flight request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
       
       // 检查是否有食材搜索
       const ingredientSearch = localStorage.getItem('ingredientSearch');
@@ -91,10 +117,10 @@ const DishRecommendationComponent = ({
       
       if (ingredientSearch) {
         // 使用食材搜索API
-        recipes = await searchRecipes(ingredientSearch);
+        recipes = await searchRecipes(ingredientSearch, controller.signal);
       } else {
         // 使用偏好推荐API
-        recipes = await getRecommendedRecipes(preferences);
+        recipes = await getRecommendedRecipes(preferences, controller.signal);
       }
       
       const convertedDishes = recipes
@@ -103,59 +129,23 @@ const DishRecommendationComponent = ({
           ...dish,
           matchScore: ingredientSearch ? 100 : calculateMatchScore(dish) // 食材搜索结果给满分
         }))
-        .slice(0, 12);
+        .slice(0, 36); // 先扩大候选池，便于多样化抽样
+      
       
       // 过滤API搜索结果，只保留真正匹配的菜品
       let filteredApiResults = convertedDishes;
       if (ingredientSearch && convertedDishes.length > 0) {
-        const searchTerms = ingredientSearch.split(/\s+/).filter(term => term.trim());
-        
-        filteredApiResults = convertedDishes.filter(dish => {
-          return searchTerms.every(term => {
-            const lowerTerm = term.toLowerCase();
-            const ingredientMatch = dish.ingredients.some(ingredient => 
-              ingredient.toLowerCase().includes(lowerTerm)
-            );
-            const nameMatch = dish.name.toLowerCase().includes(lowerTerm);
-            const descMatch = dish.description.toLowerCase().includes(lowerTerm);
-            const tagMatch = dish.tags && dish.tags.some(tag => 
-              tag.toLowerCase().includes(lowerTerm)
-            );
-            
-            return ingredientMatch || nameMatch || descMatch || tagMatch;
-          });
-        });
+        filteredApiResults = performSmartDishSearch(convertedDishes, ingredientSearch);
       }
       
       // 如果API搜索结果为空或过滤后无匹配，使用mock数据
       if (ingredientSearch && filteredApiResults.length === 0) {
-        const searchTerms = ingredientSearch.split(/\s+/).filter(term => term.trim());
-        
-        const mockResults = mockDishes
-          .filter(dish => {
-            return searchTerms.every(term => {
-              const lowerTerm = term.toLowerCase();
-              return (
-                dish.ingredients.some(ingredient => 
-                  ingredient.toLowerCase().includes(lowerTerm)
-                ) ||
-                dish.name.toLowerCase().includes(lowerTerm) ||
-                dish.description.toLowerCase().includes(lowerTerm) ||
-                dish.tags.some(tag => 
-                  tag.toLowerCase().includes(lowerTerm)
-                )
-              );
-            });
-          })
-          .map(dish => ({
-            ...dish,
-            matchScore: 100
-          }))
-          .slice(0, 12);
-          
-        setDishes(mockResults);
+        const mockResults = performSmartDishSearch(mockDishes.map(dish => ({...dish, matchScore: 100})), ingredientSearch);
+        // 搜索时随机性较低，保持相关性
+        setDishes(diversifyDishes(mockResults, { alpha: 0.2, limit: 12 }));
       } else {
-        setDishes(filteredApiResults);
+        // 非搜索场景给予更高的随机性
+        setDishes(diversifyDishes(filteredApiResults, { alpha: ingredientSearch ? 0.2 : 0.4, limit: 12 }));
       }
     } catch (err) {
       console.error('Error fetching recommendations:', err);
@@ -166,41 +156,8 @@ const DishRecommendationComponent = ({
       let fallbackDishes;
       
       if (ingredientSearch) {
-        // 在mock数据中搜索包含该食材的菜品 - 支持多关键词搜索
-        const searchTerms = ingredientSearch.split(/\s+/).filter(term => term.trim());
-        fallbackDishes = mockDishes
-          .filter(dish => {
-            // 智能搜索：每个关键词都必须在菜品信息中找到匹配 (AND关系)
-            return searchTerms.every(term => {
-              const lowerTerm = term.toLowerCase();
-              return (
-                dish.ingredients.some(ingredient => 
-                  ingredient.toLowerCase().includes(lowerTerm)
-                ) ||
-                dish.name.toLowerCase().includes(lowerTerm) ||
-                dish.description.toLowerCase().includes(lowerTerm) ||
-                dish.tags.some(tag => 
-                  tag.toLowerCase().includes(lowerTerm)
-                ) ||
-                // 支持部分匹配和同义词
-                dish.ingredients.some(ingredient => {
-                  const lowerIngredient = ingredient.toLowerCase();
-                  return (
-                    (lowerTerm === '蛋' && lowerIngredient.includes('鸡蛋')) ||
-                    (lowerTerm === '鸡蛋' && lowerIngredient.includes('蛋')) ||
-                    (lowerTerm === '豆腐' && lowerIngredient.includes('豆腐')) ||
-                    lowerIngredient.includes(lowerTerm.slice(0, -1)) // 部分匹配
-                  );
-                }) ||
-                dish.name.toLowerCase().includes(lowerTerm.slice(0, -1))
-              );
-            });
-          })
-          .map(dish => ({
-            ...dish,
-            matchScore: 100
-          }))
-          .slice(0, 12);
+        // 在mock数据中搜索包含该食材的菜品 - 使用智能搜索
+        fallbackDishes = performSmartDishSearch(mockDishes.map(dish => ({...dish, matchScore: 100})), ingredientSearch);
       } else {
         // Fallback to mock data if API fails
         fallbackDishes = mockDishes
@@ -209,10 +166,11 @@ const DishRecommendationComponent = ({
             matchScore: calculateMatchScore(dish)
           }))
           .sort((a, b) => b.matchScore - a.matchScore)
-          .slice(0, 12);
+          .slice(0, 36);
       }
       
-      setDishes(fallbackDishes);
+      // 失败时也进行多样化处理
+      setDishes(diversifyDishes(fallbackDishes, { alpha: ingredientSearch ? 0.2 : 0.4, limit: 12 }));
     } finally {
       setLoading(false);
     }
@@ -220,28 +178,18 @@ const DishRecommendationComponent = ({
 
   // Fetch recommendations when fetchTrigger changes
   useEffect(() => {
-    fetchRecommendedDishes();
-  }, [fetchTrigger]);
-
-  // Update radar chart based on first recommended dish when shouldUpdateRadar is true
-  useEffect(() => {
-    if (dishes.length > 0 && onPreferencesChange && shouldUpdateRadar) {
-      const firstDish = dishes[0];
-      // Update preferences to reflect the characteristics of the best match
-      const updatedPreferences = {
-        healthy: firstDish.scores.healthy,
-        simple: firstDish.scores.simple,
-        difficulty: firstDish.scores.difficulty,
-        quick: firstDish.scores.quick,
-        vegetarian: firstDish.scores.vegetarian,
-        spicy: firstDish.scores.spicy
-      };
-      onPreferencesChange(updatedPreferences);
-      if (onRadarUpdated) {
-        onRadarUpdated(); // Notify parent that radar has been updated
+    const timeout = setTimeout(() => {
+      fetchRecommendedDishes();
+    }, 250);
+    return () => {
+      clearTimeout(timeout);
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
       }
-    }
-  }, [dishes, shouldUpdateRadar]);
+    };
+  }, [fetchTrigger, fetchRecommendedDishes]);
+
+  
 
   const recommendedDishes = dishes;
 
@@ -320,6 +268,131 @@ const DishRecommendationComponent = ({
     </>
   );
 };
+
+// 智能搜索函数：同时支持AND搜索和整体词组搜索
+function performSmartDishSearch(dishes: (Dish & { matchScore: number })[], query: string): (Dish & { matchScore: number })[] {
+  const searchTerms = query.split(/\s+/).filter(term => term.trim());
+  
+  
+  // 如果是多个词，同时进行AND搜索和整体搜索，然后合并去重
+  if (searchTerms.length > 1) {
+    // AND搜索：每个关键词都必须匹配
+    const andResults = dishes.filter(dish => {
+      const matchResult = searchTerms.every(term => {
+        const lowerTerm = term.toLowerCase();
+        const ingredientMatch = dish.ingredients.some(ingredient => 
+          ingredient.toLowerCase().includes(lowerTerm)
+        );
+        const nameMatch = dish.name.toLowerCase().includes(lowerTerm);
+        const descMatch = dish.description.toLowerCase().includes(lowerTerm);
+        const tagMatch = dish.tags.some(tag => 
+          tag.toLowerCase().includes(lowerTerm)
+        );
+        const synonymMatch = dish.ingredients.some(ingredient => {
+          const lowerIngredient = ingredient.toLowerCase();
+          return (
+            (lowerTerm === '蛋' && lowerIngredient.includes('鸡蛋')) ||
+            (lowerTerm === '鸡蛋' && lowerIngredient.includes('蛋')) ||
+            (lowerTerm === '豆腐' && lowerIngredient.includes('豆腐'))
+          );
+        });
+        const nameSynonymMatch = (lowerTerm === '蛋' && dish.name.toLowerCase().includes('鸡蛋')) ||
+                                (lowerTerm === '鸡蛋' && dish.name.toLowerCase().includes('蛋'));
+        
+        const termMatches = ingredientMatch || nameMatch || descMatch || tagMatch || synonymMatch || nameSynonymMatch;
+        
+        
+        return termMatches;
+      });
+      
+      return matchResult;
+    });
+    
+    // 整体搜索：匹配完整查询词组（去掉空格）
+    const phraseQuery = searchTerms.join('');
+    const phraseResults = dishes.filter(dish => {
+      return (
+        dish.name.toLowerCase().includes(phraseQuery) ||
+        dish.description.toLowerCase().includes(phraseQuery) ||
+        dish.ingredients.some(ingredient => 
+          ingredient.toLowerCase().includes(phraseQuery)
+        ) ||
+        dish.tags.some(tag => 
+          tag.toLowerCase().includes(phraseQuery)
+        )
+      );
+    });
+    
+    // 合并结果并去重，优先显示整体匹配的结果
+    const combinedResults = [...phraseResults];
+    andResults.forEach(dish => {
+      if (!combinedResults.find(r => r.id === dish.id)) {
+        combinedResults.push(dish);
+      }
+    });
+    
+    // 如果AND搜索和整体搜索都没有结果，降级为OR搜索
+    if (combinedResults.length === 0) {
+      const orResults = dishes.filter(dish => {
+        return searchTerms.some(term => {
+          const lowerTerm = term.toLowerCase();
+          const ingredientMatch = dish.ingredients.some(ingredient => 
+            ingredient.toLowerCase().includes(lowerTerm)
+          );
+          const nameMatch = dish.name.toLowerCase().includes(lowerTerm);
+          const descMatch = dish.description.toLowerCase().includes(lowerTerm);
+          const tagMatch = dish.tags.some(tag => 
+            tag.toLowerCase().includes(lowerTerm)
+          );
+          const synonymMatch = dish.ingredients.some(ingredient => {
+            const lowerIngredient = ingredient.toLowerCase();
+            return (
+              (lowerTerm === '蛋' && lowerIngredient.includes('鸡蛋')) ||
+              (lowerTerm === '鸡蛋' && lowerIngredient.includes('蛋')) ||
+              (lowerTerm === '豆腐' && lowerIngredient.includes('豆腐'))
+            );
+          });
+          const nameSynonymMatch = (lowerTerm === '蛋' && dish.name.toLowerCase().includes('鸡蛋')) ||
+                                  (lowerTerm === '鸡蛋' && dish.name.toLowerCase().includes('蛋'));
+          
+          return ingredientMatch || nameMatch || descMatch || tagMatch || synonymMatch || nameSynonymMatch;
+        });
+      });
+      
+      combinedResults.push(...orResults);
+    }
+    
+    return combinedResults.slice(0, 36);
+  } else {
+    // 单个词的搜索
+    const term = searchTerms[0];
+    const lowerTerm = term.toLowerCase();
+    
+    return dishes.filter(dish => {
+      return (
+        dish.ingredients.some(ingredient => 
+          ingredient.toLowerCase().includes(lowerTerm)
+        ) ||
+        dish.name.toLowerCase().includes(lowerTerm) ||
+        dish.description.toLowerCase().includes(lowerTerm) ||
+        dish.tags.some(tag => 
+          tag.toLowerCase().includes(lowerTerm)
+        ) ||
+        // 支持特定的同义词匹配
+        dish.ingredients.some(ingredient => {
+          const lowerIngredient = ingredient.toLowerCase();
+          return (
+            (lowerTerm === '蛋' && lowerIngredient.includes('鸡蛋')) ||
+            (lowerTerm === '鸡蛋' && lowerIngredient.includes('蛋')) ||
+            (lowerTerm === '豆腐' && lowerIngredient.includes('豆腐'))
+          );
+        }) ||
+        (lowerTerm === '蛋' && dish.name.toLowerCase().includes('鸡蛋')) ||
+        (lowerTerm === '鸡蛋' && dish.name.toLowerCase().includes('蛋'))
+      );
+    }).slice(0, 36);
+  }
+}
 
 // 使用 React.memo 优化性能
 export const DishRecommendation = React.memo(DishRecommendationComponent);

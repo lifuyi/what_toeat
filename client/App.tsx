@@ -11,11 +11,10 @@ const DishRecommendation = lazy(() => import('./components/DishRecommendation').
 export default function App() {
   const [preferences, setPreferences] = useState<Preferences>({
     healthy: 5,
-    simple: 5,
-    difficulty: 5,
-    quick: 5,
+    difficulty: 2,
     vegetarian: 5,
     spicy: 5,
+    sweetness: 5,
   });
   const [fetchTrigger, setFetchTrigger] = useState(0);
 
@@ -25,7 +24,7 @@ export default function App() {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     return saved ? saved === 'true' : prefersDark;
   });
-  const [shouldUpdateRadarFromRecommendations, setShouldUpdateRadarFromRecommendations] = useState(false);
+  
 
   const handleThemeToggle = () => {
     const newDarkMode = !isDarkMode;
@@ -44,7 +43,6 @@ export default function App() {
 
   const handlePresetSelect = (newPreferences: Preferences) => {
     setPreferences(newPreferences);
-    setShouldUpdateRadarFromRecommendations(true);
     setFetchTrigger(prev => prev + 1); // Increment trigger to force re-fetch
   };
 
@@ -52,7 +50,11 @@ export default function App() {
     setPreferences(newPreferences);
     // 推荐只在用户需要时触发搜索；这里仅切换回推荐模式并刷新
     localStorage.removeItem('ingredientSearch');
-    setFetchTrigger(prev => prev + 1);
+    // debounce fetchTrigger bumps to avoid rapid bursts
+    window.clearTimeout((window as any).__prefFetchTimer);
+    (window as any).__prefFetchTimer = window.setTimeout(() => {
+      setFetchTrigger(prev => prev + 1);
+    }, 250);
   };
 
   // 初始化深色模式
@@ -115,8 +117,6 @@ export default function App() {
                 <DishRecommendation 
                   preferences={preferences} 
                   onPreferencesChange={setPreferences}
-                  shouldUpdateRadar={shouldUpdateRadarFromRecommendations}
-                  onRadarUpdated={() => setShouldUpdateRadarFromRecommendations(false)}
                   fetchTrigger={fetchTrigger}
                 />
               </Suspense>
