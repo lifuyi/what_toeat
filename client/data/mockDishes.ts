@@ -18,7 +18,7 @@ export const mockDishes: Dish[] = [
     difficulty: '简单',
     tags: ['快手', '营养', '家常'],
     category: '面食',
-    scores: { healthy: 7, simple: 9, difficulty: 2, quick: 9, vegetarian: 6, spicy: 1 }
+    scores: { healthy: 7, difficulty: 2, vegetarian: 6, spicy: 1, sweetness: 3 }
   },
   {
     id: '2',
@@ -37,7 +37,7 @@ export const mockDishes: Dish[] = [
     difficulty: '中等',
     tags: ['川菜', '辣', '下饭'],
     category: '川菜',
-    scores: { healthy: 6, simple: 4, difficulty: 6, quick: 6, vegetarian: 2, spicy: 8 }
+    scores: { healthy: 6, difficulty: 6, vegetarian: 2, spicy: 8, sweetness: 2 }
   },
   {
     id: '3',
@@ -56,7 +56,7 @@ export const mockDishes: Dish[] = [
     difficulty: '简单',
     tags: ['蒸菜', '嫩滑', '营养', '清淡'],
     category: '健康菜品',
-    scores: { healthy: 9, simple: 8, difficulty: 2, quick: 7, vegetarian: 6, spicy: 0 }
+    scores: { healthy: 9, difficulty: 2, vegetarian: 6, spicy: 0, sweetness: 10 }
   },
   {
     id: '4',
@@ -77,7 +77,7 @@ export const mockDishes: Dish[] = [
     difficulty: '中等',
     tags: ['红烧', '软烂', '下饭', '家常'],
     category: '家常菜',
-    scores: { healthy: 6, simple: 5, difficulty: 5, quick: 3, vegetarian: 1, spicy: 0 }
+    scores: { healthy: 6, difficulty: 5, vegetarian: 1, spicy: 0, sweetness: 8 }
   },
   {
     id: '5',
@@ -96,7 +96,7 @@ export const mockDishes: Dish[] = [
     difficulty: '简单',
     tags: ['凉菜', '爽口', '开胃', '素食'],
     category: '凉菜',
-    scores: { healthy: 9, simple: 9, difficulty: 1, quick: 9, vegetarian: 10, spicy: 3 }
+    scores: { healthy: 9, difficulty: 1, vegetarian: 10, spicy: 3, sweetness: 9 }
   },
   {
     id: '6',
@@ -115,7 +115,7 @@ export const mockDishes: Dish[] = [
     difficulty: '中等',
     tags: ['川菜', '麻辣', '嫩滑'],
     category: '川菜',
-    scores: { healthy: 7, simple: 6, difficulty: 5, quick: 7, vegetarian: 4, spicy: 9 }
+    scores: { healthy: 7, difficulty: 5, vegetarian: 4, spicy: 9, sweetness: 3 }
   },
   {
     id: '7',
@@ -134,7 +134,7 @@ export const mockDishes: Dish[] = [
     difficulty: '简单',
     tags: ['清蒸', '鲜美', '营养'],
     category: '海鲜',
-    scores: { healthy: 9, simple: 7, difficulty: 3, quick: 6, vegetarian: 0, spicy: 0 }
+    scores: { healthy: 9, difficulty: 3, vegetarian: 0, spicy: 0, sweetness: 10 }
   },
   {
     id: '8',
@@ -152,7 +152,7 @@ export const mockDishes: Dish[] = [
     difficulty: '中等',
     tags: ['甜品', '荤菜', '糖醋'],
     category: '家常菜',
-    scores: { healthy: 5, simple: 5, difficulty: 6, quick: 4, vegetarian: 1, spicy: 0 }
+    scores: { healthy: 5, difficulty: 6, vegetarian: 1, spicy: 0, sweetness: 8 }
   },
   {
     id: '9',
@@ -171,7 +171,7 @@ export const mockDishes: Dish[] = [
     difficulty: '简单',
     tags: ['汤羹', '嫩滑', '营养', '清淡'],
     category: '汤品',
-    scores: { healthy: 9, simple: 8, difficulty: 2, quick: 8, vegetarian: 7, spicy: 0 }
+    scores: { healthy: 9, difficulty: 2, vegetarian: 7, spicy: 0, sweetness: 10 }
   },
   {
     id: '10',
@@ -190,7 +190,7 @@ export const mockDishes: Dish[] = [
     difficulty: '简单',
     tags: ['煎饼', '营养', '创意', '素食'],
     category: '主食',
-    scores: { healthy: 8, simple: 7, difficulty: 3, quick: 7, vegetarian: 8, spicy: 0 }
+    scores: { healthy: 8, difficulty: 3, vegetarian: 8, spicy: 0, sweetness: 10 }
   },
   {
     id: '11',
@@ -209,6 +209,6 @@ export const mockDishes: Dish[] = [
     difficulty: '简单',
     tags: ['家常', '下饭', '营养', '素食'],
     category: '家常菜',
-    scores: { healthy: 8, simple: 8, difficulty: 2, quick: 8, vegetarian: 8, spicy: 1 }
+    scores: { healthy: 8, difficulty: 2, vegetarian: 8, spicy: 1, sweetness: 9 }
   }
 ];

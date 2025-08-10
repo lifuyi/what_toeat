@@ -11,6 +11,7 @@ export default defineConfig({
     },
   },
   build: {
+    target: 'es2018',
     rollupOptions: {
       output: {
         manualChunks: {
@@ -26,7 +27,8 @@ export default defineConfig({
         drop_debugger: true
       }
     },
-    chunkSizeWarningLimit: 1000
+    chunkSizeWarningLimit: 1000,
+    reportCompressedSize: true
   },
   server: {
     hmr: {

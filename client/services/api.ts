@@ -1,5 +1,5 @@
 // API service for communicating with the backend
-const API_BASE_URL = 'http://localhost:3001';
+const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:3001';
 
 export interface Recipe {
   id: number;
@@ -33,11 +33,10 @@ export interface Recipe {
 
 export interface Preferences {
   healthy: number;
-  simple: number;
   difficulty: number;
-  quick: number;
   vegetarian: number;
   spicy: number;
+  sweetness: number;
 }
 
 // Convert database recipe to client Dish format
@@ -98,19 +97,18 @@ export function convertRecipeToDish(recipe: Recipe) {
     category,
     scores: {
       healthy: recipe.健康度,
-      simple: 10 - recipe.制作难易, // Invert difficulty for simplicity
       difficulty: recipe.制作难易,
-      quick: recipe.制作速度,
       vegetarian: recipe.素食偏好,
-      spicy: recipe.辛辣程度
+      spicy: recipe.辛辣程度,
+      sweetness: recipe.甜度
     }
   };
 }
 
 // Fetch all recipes
-export async function fetchRecipes(): Promise<Recipe[]> {
+export async function fetchRecipes(signal?: AbortSignal): Promise<Recipe[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/recipes`);
+    const response = await fetch(`${API_BASE_URL}/api/recipes`, { signal });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -122,9 +120,9 @@ export async function fetchRecipes(): Promise<Recipe[]> {
 }
 
 // Search recipes by query
-export async function searchRecipes(query: string): Promise<Recipe[]> {
+export async function searchRecipes(query: string, signal?: AbortSignal): Promise<Recipe[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/recipes?query=${encodeURIComponent(query)}`);
+    const response = await fetch(`${API_BASE_URL}/api/recipes?query=${encodeURIComponent(query)}`, { signal });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -132,24 +130,8 @@ export async function searchRecipes(query: string): Promise<Recipe[]> {
     
     // 如果API返回空结果，尝试获取所有数据并在前端搜索
     if (!results || results.length === 0) {
-      const allRecipes = await fetchRecipes();
-      const searchTerms = query.split(/\s+/).filter(term => term.trim());
-      
-      return allRecipes.filter(recipe => {
-        // 智能搜索：每个关键词都必须在菜品信息中找到匹配
-        return searchTerms.every(term => {
-          const lowerTerm = term.toLowerCase();
-          return (
-            (recipe.title && recipe.title.toLowerCase().includes(lowerTerm)) ||
-            (recipe.desc && recipe.desc.toLowerCase().includes(lowerTerm)) ||
-            (recipe.yl && recipe.yl.toLowerCase().includes(lowerTerm)) ||
-            (recipe.fl && recipe.fl.toLowerCase().includes(lowerTerm)) ||
-            // 支持部分匹配，如"蛋"匹配"鸡蛋"
-            (recipe.title && recipe.title.toLowerCase().includes(lowerTerm.slice(0, -1))) ||
-            (recipe.yl && recipe.yl.toLowerCase().includes(lowerTerm.slice(0, -1)))
-          );
-        });
-      });
+      const allRecipes = await fetchRecipes(signal);
+      return performClientSideSearch(allRecipes, query);
     }
     
     return results;
@@ -157,24 +139,8 @@ export async function searchRecipes(query: string): Promise<Recipe[]> {
     console.error('Error searching recipes:', error);
     // 如果API完全失败，尝试获取所有数据并在前端搜索
     try {
-      const allRecipes = await fetchRecipes();
-      const searchTerms = query.split(/\s+/).filter(term => term.trim());
-      
-      return allRecipes.filter(recipe => {
-        // 智能搜索：每个关键词都必须在菜品信息中找到匹配
-        return searchTerms.every(term => {
-          const lowerTerm = term.toLowerCase();
-          return (
-            (recipe.title && recipe.title.toLowerCase().includes(lowerTerm)) ||
-            (recipe.desc && recipe.desc.toLowerCase().includes(lowerTerm)) ||
-            (recipe.yl && recipe.yl.toLowerCase().includes(lowerTerm)) ||
-            (recipe.fl && recipe.fl.toLowerCase().includes(lowerTerm)) ||
-            // 支持部分匹配，如"蛋"匹配"鸡蛋"
-            (recipe.title && recipe.title.toLowerCase().includes(lowerTerm.slice(0, -1))) ||
-            (recipe.yl && recipe.yl.toLowerCase().includes(lowerTerm.slice(0, -1)))
-          );
-        });
-      });
+      const allRecipes = await fetchRecipes(signal);
+      return performClientSideSearch(allRecipes, query);
     } catch (fallbackError) {
       console.error('Fallback search also failed:', fallbackError);
       throw error;
@@ -182,8 +148,69 @@ export async function searchRecipes(query: string): Promise<Recipe[]> {
   }
 }
 
+// 智能搜索函数：同时支持AND搜索和整体词组搜索
+function performClientSideSearch(allRecipes: Recipe[], query: string): Recipe[] {
+  const searchTerms = query.split(/\s+/).filter(term => term.trim());
+  
+  // 如果是多个词，同时进行AND搜索和整体搜索，然后合并去重
+  if (searchTerms.length > 1) {
+    // AND搜索：每个关键词都必须匹配
+    const andResults = allRecipes.filter(recipe => {
+      return searchTerms.every(term => {
+        const lowerTerm = term.toLowerCase();
+        return (
+          (recipe.title && recipe.title.toLowerCase().includes(lowerTerm)) ||
+          (recipe.desc && recipe.desc.toLowerCase().includes(lowerTerm)) ||
+          (recipe.yl && recipe.yl.toLowerCase().includes(lowerTerm)) ||
+          (recipe.fl && recipe.fl.toLowerCase().includes(lowerTerm)) ||
+          // 支持特定的同义词匹配
+          (lowerTerm === '蛋' && ((recipe.title && recipe.title.toLowerCase().includes('鸡蛋')) || (recipe.yl && recipe.yl.toLowerCase().includes('鸡蛋')))) ||
+          (lowerTerm === '鸡蛋' && ((recipe.title && recipe.title.toLowerCase().includes('蛋')) || (recipe.yl && recipe.yl.toLowerCase().includes('蛋'))))
+        );
+      });
+    });
+    
+    // 整体搜索：匹配完整查询词组（去掉空格）
+    const phraseQuery = searchTerms.join('');
+    const phraseResults = allRecipes.filter(recipe => {
+      return (
+        (recipe.title && recipe.title.toLowerCase().includes(phraseQuery)) ||
+        (recipe.desc && recipe.desc.toLowerCase().includes(phraseQuery)) ||
+        (recipe.yl && recipe.yl.toLowerCase().includes(phraseQuery)) ||
+        (recipe.fl && recipe.fl.toLowerCase().includes(phraseQuery))
+      );
+    });
+    
+    // 合并结果并去重，优先显示整体匹配的结果
+    const combinedResults = [...phraseResults];
+    andResults.forEach(recipe => {
+      if (!combinedResults.find(r => r.id === recipe.id)) {
+        combinedResults.push(recipe);
+      }
+    });
+    
+    return combinedResults;
+  } else {
+    // 单个词的搜索
+    const term = searchTerms[0];
+    const lowerTerm = term.toLowerCase();
+    
+    return allRecipes.filter(recipe => {
+      return (
+        (recipe.title && recipe.title.toLowerCase().includes(lowerTerm)) ||
+        (recipe.desc && recipe.desc.toLowerCase().includes(lowerTerm)) ||
+        (recipe.yl && recipe.yl.toLowerCase().includes(lowerTerm)) ||
+        (recipe.fl && recipe.fl.toLowerCase().includes(lowerTerm)) ||
+        // 支持特定的同义词匹配
+        (lowerTerm === '蛋' && ((recipe.title && recipe.title.toLowerCase().includes('鸡蛋')) || (recipe.yl && recipe.yl.toLowerCase().includes('鸡蛋')))) ||
+        (lowerTerm === '鸡蛋' && ((recipe.title && recipe.title.toLowerCase().includes('蛋')) || (recipe.yl && recipe.yl.toLowerCase().includes('蛋'))))
+      );
+    });
+  }
+}
+
 // Get recommended recipes based on preferences
-export async function getRecommendedRecipes(preferences: Preferences): Promise<Recipe[]> {
+export async function getRecommendedRecipes(preferences: Preferences, signal?: AbortSignal): Promise<Recipe[]> {
   try {
     const response = await fetch(`${API_BASE_URL}/api/recommendations`, {
       method: 'POST',
@@ -191,6 +218,7 @@ export async function getRecommendedRecipes(preferences: Preferences): Promise<R
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(preferences),
+      signal,
     });
     
     if (!response.ok) {
@@ -200,6 +228,6 @@ export async function getRecommendedRecipes(preferences: Preferences): Promise<R
   } catch (error) {
     console.error('Error fetching recommendations:', error);
     // Fallback to regular recipes if recommendations endpoint fails
-    return await fetchRecipes();
+    return await fetchRecipes(signal);
   }
 }

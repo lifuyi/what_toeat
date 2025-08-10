@@ -264,3 +264,60 @@
 html {
   font-size: var(--font-size);
 }
+
+/* 滑块增强样式 */
+.slider-enhanced [data-slot="slider-thumb"] {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #e2e8f0 100%);
+  border: 2px solid var(--slider-primary, #3b82f6);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    0 0 0 0 var(--slider-primary, #3b82f6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  position: relative;
+  z-index: 10;
+}
+
+.slider-enhanced [data-slot="slider-thumb"]:hover {
+  border-color: var(--slider-primary, #3b82f6);
+  box-shadow: 
+    0 6px 20px rgba(0, 0, 0, 0.2),
+    0 0 0 4px rgba(59, 130, 246, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transform: scale(1.25);
+}
+
+.slider-enhanced [data-slot="slider-thumb"]:active {
+  transform: scale(1.15);
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.25),
+    0 0 0 6px rgba(59, 130, 246, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.slider-enhanced [data-slot="slider-thumb"]::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--slider-primary, #3b82f6) 0%, rgba(59, 130, 246, 0.8) 100%);
+  opacity: 0.8;
+  transition: all 0.3s ease;
+}
+
+.slider-enhanced [data-slot="slider-thumb"]:hover::after {
+  opacity: 1;
+  transform: scale(0.8);
+}
+
+/* 深色模式下的滑块样式 */
+.dark .slider-enhanced [data-slot="slider-thumb"] {
+  background: linear-gradient(135deg, #1f2937 0%, #374151 50%, #4b5563 100%);
+  border-color: var(--slider-primary, #3b82f6);
+}
+
+.dark .slider-enhanced [data-slot="slider-thumb"]:hover {
+  box-shadow: 
+    0 6px 20px rgba(0, 0, 0, 0.4),
+    0 0 0 4px rgba(59, 130, 246, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}

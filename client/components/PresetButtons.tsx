@@ -20,42 +20,42 @@ const presets: PresetConfig[] = [
     name: '健康达人',
     emoji: '🥗',
     description: '注重营养均衡',
-    preferences: { healthy: 10, simple: 6, difficulty: 4, quick: 5, vegetarian: 8, spicy: 2 },
+    preferences: { healthy: 10, difficulty: 1, vegetarian: 8, spicy: 2, sweetness: 3 },
     gradient: 'from-emerald-500 to-green-400'
   },
   {
-    name: '快手料理',
+    name: '简单易做',
     emoji: '⚡',
-    description: '简单快速制作',
-    preferences: { healthy: 6, simple: 10, difficulty: 2, quick: 10, vegetarian: 5, spicy: 4 },
+    description: '制作简单快手',
+    preferences: { healthy: 6, difficulty: 1, vegetarian: 5, spicy: 4, sweetness: 5 },
     gradient: 'from-amber-500 to-orange-400'
   },
   {
     name: '素食主义',
     emoji: '🥬',
     description: '纯素食菜品',
-    preferences: { healthy: 9, simple: 5, difficulty: 5, quick: 6, vegetarian: 10, spicy: 3 },
+    preferences: { healthy: 9, difficulty: 2, vegetarian: 10, spicy: 3, sweetness: 4 },
     gradient: 'from-lime-500 to-green-500'
   },
   {
     name: '重口味',
     emoji: '🌶️',
     description: '香辣刺激',
-    preferences: { healthy: 4, simple: 6, difficulty: 7, quick: 5, vegetarian: 3, spicy: 10 },
+    preferences: { healthy: 4, difficulty: 3, vegetarian: 3, spicy: 10, sweetness: 2 },
     gradient: 'from-red-500 to-pink-500'
   },
   {
     name: '精致烹饪',
     emoji: '👨‍🍳',
     description: '复杂精美菜品',
-    preferences: { healthy: 7, simple: 3, difficulty: 9, quick: 3, vegetarian: 4, spicy: 5 },
+    preferences: { healthy: 7, difficulty: 3, vegetarian: 4, spicy: 5, sweetness: 6 },
     gradient: 'from-purple-500 to-indigo-500'
   },
   {
     name: '均衡口味',
     emoji: '⚖️',
     description: '中等偏好',
-    preferences: { healthy: 5, simple: 5, difficulty: 5, quick: 5, vegetarian: 5, spicy: 5 },
+    preferences: { healthy: 5, difficulty: 2, vegetarian: 5, spicy: 5, sweetness: 5 },
     gradient: 'from-blue-500 to-cyan-500'
   }
 ];
@@ -65,11 +65,10 @@ const PresetButtonsComponent = ({ onPresetSelect, onRandomRecommend }: PresetBut
   const generateRandomPreferences = (): Preferences => {
     return {
       healthy: Math.floor(Math.random() * 10) + 1,
-      simple: Math.floor(Math.random() * 10) + 1,
-      difficulty: Math.floor(Math.random() * 10) + 1,
-      quick: Math.floor(Math.random() * 10) + 1,
+      difficulty: Math.floor(Math.random() * 3) + 1, // 1-3 对应简单、中等、困难
       vegetarian: Math.floor(Math.random() * 10) + 1,
       spicy: Math.floor(Math.random() * 10) + 1,
+      sweetness: Math.floor(Math.random() * 10) + 1,
     };
   };
 

@@ -116,7 +116,6 @@ export default function App() {
               <Suspense fallback={<div className="h-96 bg-gradient-to-br from-white/90 to-purple-50/90 rounded-lg animate-pulse"></div>}>
                 <DishRecommendation 
                   preferences={preferences} 
-                  onPreferencesChange={setPreferences}
                   fetchTrigger={fetchTrigger}
                 />
               </Suspense>

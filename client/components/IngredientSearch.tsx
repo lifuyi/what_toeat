@@ -53,7 +53,9 @@ const IngredientSearchComponent = ({ onSearch }: IngredientSearchProps) => {
                 type="text"
                 placeholder="输入您有的食材，如：番茄、鸡蛋、土豆..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                }}
                 onKeyPress={handleKeyPress}
                 className="
                   pr-10 border-2 rounded-full backdrop-blur-sm transition-all duration-300 focus:shadow-lg

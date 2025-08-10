@@ -6,6 +6,8 @@
 - ✅ 使用 `React.lazy()` 懒加载重型组件
 - ✅ `IngredientSearch`, `RadarController`, `DishRecommendation` 组件懒加载
 - ✅ 添加 `Suspense` 包装器和加载占位符
+ - ✅ 为搜索输入与偏好变更添加 250-400ms 防抖，减少无效请求
+ - ✅ 使用 `AbortController` 取消上一次未完成的请求，避免竞态与浪费
 
 ### 2. **组件性能优化**
 - ✅ 使用 `React.memo()` 包装所有主要组件
@@ -18,6 +20,7 @@
 - ✅ 分离大型库 (recharts, react-vendor)
 - ✅ 启用 Terser 压缩
 - ✅ 生产环境移除 console 和 debugger
+ - ✅ 设定 `build.target=es2018` 与 `reportCompressedSize=true`
 
 ### 4. **数据结构优化**
 - ✅ 将 mock 数据移动到单独文件
@@ -61,7 +64,7 @@ npm run preview
 
 ### 性能分析
 ```bash
-npm run build -- --analyze
+npm run build:analyze
 ```
 
 ## 📝 最佳实践

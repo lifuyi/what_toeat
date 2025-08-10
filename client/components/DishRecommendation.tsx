@@ -14,7 +14,7 @@ export interface Dish {
   cookingTime: string;
   difficulty: string;
   tags: string[];
-  category?: string;
+  category: string;
   scores: {
     healthy: number;
     difficulty: number;
@@ -31,13 +31,11 @@ import { mockDishes } from '../data/mockDishes';
 
 interface DishRecommendationProps {
   preferences: Preferences;
-  onPreferencesChange?: (preferences: Preferences) => void;
   fetchTrigger: number; // Add fetchTrigger prop
 }
 
 const DishRecommendationComponent = ({
   preferences,
-  onPreferencesChange,
   fetchTrigger
 }: DishRecommendationProps) => {
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);

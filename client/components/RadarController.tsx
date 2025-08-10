@@ -11,11 +11,10 @@ export interface PreferenceData {
 
 export interface Preferences {
   healthy: number;
-  simple: number;
   difficulty: number;
-  quick: number;
   vegetarian: number;
   spicy: number;
+  sweetness: number;
 }
 
 interface RadarControllerProps {
@@ -26,11 +25,10 @@ interface RadarControllerProps {
 const RadarControllerComponent = ({ preferences, onPreferencesChange }: RadarControllerProps) => {
   const radarData: PreferenceData[] = useMemo(() => [
     { dimension: '健康', value: preferences.healthy, fullMark: 10 },
-    { dimension: '简单', value: preferences.simple, fullMark: 10 },
-    { dimension: '难度', value: preferences.difficulty, fullMark: 10 },
-    { dimension: '快速', value: preferences.quick, fullMark: 10 },
+    { dimension: '制作难度', value: preferences.difficulty * 3.33, fullMark: 10 }, // 将1-3映射到10分制显示
     { dimension: '素食', value: preferences.vegetarian, fullMark: 10 },
     { dimension: '辛辣', value: preferences.spicy, fullMark: 10 },
+    { dimension: '甜度', value: preferences.sweetness, fullMark: 10 },
   ], [preferences]);
 
   const handleSliderChange = useCallback((key: keyof Preferences, value: number[]) => {
@@ -50,28 +48,15 @@ const RadarControllerComponent = ({ preferences, onPreferencesChange }: RadarCon
       color: '#10b981'
     },
     { 
-      key: 'simple' as keyof Preferences, 
-      label: '制作简单', 
-      value: preferences.simple, 
-      emoji: '⚡',
-      gradient: 'from-amber-500 to-yellow-400',
-      color: '#f59e0b'
-    },
-    { 
       key: 'difficulty' as keyof Preferences, 
       label: '制作难度', 
       value: preferences.difficulty, 
       emoji: '🔥',
       gradient: 'from-red-500 to-orange-400',
-      color: '#ef4444'
-    },
-    { 
-      key: 'quick' as keyof Preferences, 
-      label: '制作速度', 
-      value: preferences.quick, 
-      emoji: '⏱️',
-      gradient: 'from-blue-500 to-cyan-400',
-      color: '#3b82f6'
+      color: '#ef4444',
+      isDiscrete: true,
+      discreteLabels: ['简单', '中等', '困难'],
+      discreteValues: [1, 2, 3]
     },
     { 
       key: 'vegetarian' as keyof Preferences, 
@@ -88,6 +73,14 @@ const RadarControllerComponent = ({ preferences, onPreferencesChange }: RadarCon
       emoji: '🌶️',
       gradient: 'from-rose-500 to-pink-400',
       color: '#f43f5e'
+    },
+    { 
+      key: 'sweetness' as keyof Preferences, 
+      label: '甜度偏好', 
+      value: preferences.sweetness, 
+      emoji: '🍯',
+      gradient: 'from-pink-500 to-purple-400',
+      color: '#ec4899'
     },
   ];
 
@@ -143,38 +136,86 @@ const RadarControllerComponent = ({ preferences, onPreferencesChange }: RadarCon
         </div>
         
         {/* 滑块控制器 */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {sliderConfigs.map(({ key, label, value, emoji, gradient, color }) => (
-            <div key={key} className="space-y-3 p-4 rounded-xl border hover:shadow-lg transition-all duration-300 dark:bg-gradient-to-br dark:from-gray-700/80 dark:to-gray-800/80 dark:border-gray-600 dark:hover:shadow-gray-900/20 bg-gradient-to-br from-white/80 to-gray-50/80 border-gray-200">
-              <div className="flex items-center justify-between">
-                <label className="text-sm sm:text-base flex items-center gap-2">
-                  <span className="text-lg animate-pulse">{emoji}</span>
-                  <span className="dark:text-gray-200 text-gray-700">{label}</span>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          {sliderConfigs.map(({ key, label, value, emoji, gradient, color, isDiscrete, discreteLabels, discreteValues }) => (
+            <div key={key} className="group relative space-y-4 p-6 rounded-2xl border-2 hover:shadow-2xl hover:scale-[1.02] transition-all duration-500 dark:bg-gradient-to-br dark:from-gray-700/90 dark:to-gray-800/90 dark:border-gray-500 dark:hover:shadow-purple-900/30 dark:hover:border-gray-400 bg-gradient-to-br from-white/95 to-gray-50/95 border-gray-300 hover:border-purple-300 hover:shadow-purple-200/50">
+              {/* 背景光效 */}
+              <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-white/20 via-transparent to-purple-100/20 dark:from-gray-600/20 dark:to-purple-900/20"></div>
+              
+              <div className="relative flex items-center justify-between">
+                <label className="text-sm sm:text-base flex items-center gap-3">
+                  <span className="text-2xl group-hover:scale-110 transition-transform duration-300 filter drop-shadow-lg">{emoji}</span>
+                  <span className="font-medium dark:text-gray-100 text-gray-800 group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors duration-300">{label}</span>
                 </label>
-                <span className={`
-                  text-sm px-3 py-1 rounded-full text-white
-                  bg-gradient-to-r ${gradient} shadow-lg
+                <div className={`
+                  relative text-sm font-bold px-4 py-2 rounded-xl text-white shadow-lg
+                  bg-gradient-to-r ${gradient} 
+                  group-hover:shadow-xl group-hover:scale-110 transition-all duration-300
+                  before:absolute before:inset-0 before:rounded-xl before:bg-white/20 before:opacity-0 group-hover:before:opacity-100 before:transition-opacity before:duration-300
                 `}>
-                  {value}
-                </span>
+                  <span className="relative z-10">{value}</span>
+                </div>
               </div>
-              <div className="relative">
-                <Slider
-                  value={[value]}
-                  onValueChange={(value) => handleSliderChange(key, value)}
-                  max={10}
-                  min={0}
-                  step={1}
-                  className="w-full"
-                  style={{ 
-                    '--slider-primary': color,
-                  } as React.CSSProperties}
-                />
-                {/* 滑块进度背景 */}
-                <div 
-                  className={`absolute top-2 left-0 h-2 bg-gradient-to-r ${gradient} rounded-full transition-all duration-300`}
-                  style={{ width: `${(value / 10) * 100}%` }}
-                ></div>
+              
+              <div className="relative space-y-2">
+                {/* 滑块刻度背景 */}
+                <div className="flex justify-between text-xs dark:text-gray-400 text-gray-500 px-1">
+                  {isDiscrete ? (
+                    discreteValues?.map((val, idx) => (
+                      <span key={val} className={`transition-colors duration-300 ${value === val ? 'dark:text-purple-300 text-purple-600 font-medium' : ''}`}>
+                        {discreteLabels?.[idx]}
+                      </span>
+                    ))
+                  ) : (
+                    [0, 2, 4, 6, 8, 10].map(num => (
+                      <span key={num} className={`transition-colors duration-300 ${value >= num ? 'dark:text-purple-300 text-purple-600 font-medium' : ''}`}>
+                        {num}
+                      </span>
+                    ))
+                  )}
+                </div>
+                
+                <div className="relative">
+                  {/* 滑块轨道背景 */}
+                  <div className="absolute top-1/2 left-0 right-0 h-3 -translate-y-1/2 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-600 dark:via-gray-500 dark:to-gray-600 rounded-full shadow-inner"></div>
+                  
+                  {/* 动态进度条 */}
+                  <div 
+                    className={`absolute top-1/2 left-0 h-3 -translate-y-1/2 bg-gradient-to-r ${gradient} rounded-full transition-all duration-500 shadow-lg`}
+                    style={{ width: `${isDiscrete ? ((value - 1) / 2) * 100 : (value / 10) * 100}%` }}
+                  >
+                    {/* 进度条光效 */}
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-r from-white/30 via-white/10 to-transparent"></div>
+                  </div>
+                  
+                  <Slider
+                    value={[value]}
+                    onValueChange={(value) => handleSliderChange(key, value)}
+                    max={isDiscrete ? 3 : 10}
+                    min={isDiscrete ? 1 : 0}
+                    step={1}
+                    className="relative w-full slider-enhanced z-10"
+                    style={{ 
+                      '--slider-primary': color,
+                    } as React.CSSProperties}
+                  />
+                  
+                  {/* 滑块发光效果 */}
+                  <div 
+                    className={`absolute top-1/2 -translate-y-1/2 w-6 h-6 rounded-full blur-md opacity-60 transition-all duration-500 bg-gradient-to-r ${gradient}`}
+                    style={{ left: `calc(${isDiscrete ? ((value - 1) / 2) * 100 : (value / 10) * 100}% - 12px)` }}
+                  ></div>
+                </div>
+                
+                {/* 数值提示 */}
+                <div className="text-center">
+                  <span className="text-xs dark:text-gray-400 text-gray-500">
+                    {isDiscrete ? 
+                      (discreteLabels?.[discreteValues?.indexOf(value) || 0] || '') :
+                      (value <= 3 ? '较低' : value <= 6 ? '中等' : value <= 8 ? '较高' : '很高')
+                    }
+                  </span>
+                </div>
               </div>
             </div>
           ))}
