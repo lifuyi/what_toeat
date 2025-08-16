@@ -27,21 +27,17 @@
 		<!-- Preset buttons section -->
 		<view class="preset-section">
 			<text class="section-title">🎯 快速预设配置</text>
-			<view class="preset-grid">
+			<view class="preset-row">
 				<view 
 					v-for="(preset, index) in presets" 
 					:key="index"
-					class="preset-btn"
+					class="preset-icon-btn"
 					@tap="selectPreset(preset)"
 				>
 					<text class="preset-emoji">{{ preset.emoji }}</text>
-					<text class="preset-name">{{ preset.name }}</text>
-					<text class="preset-desc">{{ preset.description }}</text>
 				</view>
-				<view class="preset-btn preset-random" @tap="randomRecommend">
+				<view class="preset-icon-btn preset-random" @tap="randomRecommend">
 					<text class="preset-emoji">🎲</text>
-					<text class="preset-name">随机推荐</text>
-					<text class="preset-desc">惊喜美食</text>
 				</view>
 			</view>
 		</view>
@@ -53,20 +49,40 @@
 					<text class="search-emoji">🥬</text>
 					<text class="search-title">食材搜索</text>
 				</view>
-				<view class="search-input-wrapper">
-					<input 
-						class="search-input" 
-						placeholder="输入您有的食材，如：番茄、鸡蛋、土豆..."
-						v-model="searchTerm"
-						@confirm="handleSearch"
-					/>
-					<view v-if="searchTerm" class="clear-btn" @tap="clearSearch">✕</view>
+				<view class="search-row">
+					<view class="search-input-wrapper">
+						<input 
+							class="search-input" 
+							placeholder="输入您有的食材..."
+							v-model="searchTerm"
+							@confirm="handleSearch"
+						/>
+						<view v-if="searchTerm" class="clear-btn" @tap="clearSearch">✕</view>
+					</view>
+					<button class="search-btn" @tap="handleSearch" :disabled="!searchTerm.trim()">
+						<text v-if="isSearching">🔍</text>
+						<text v-else>🔍</text>
+					</button>
 				</view>
-				<button class="search-btn" @tap="handleSearch" :disabled="!searchTerm.trim()">
-					<text v-if="isSearching">🔍 搜索中...</text>
-					<text v-else>🔍 搜索菜品</text>
-				</button>
 				<text class="search-tip">💡 输入您现有的食材，我们为您推荐相关菜品</text>
+			</view>
+		</view>
+
+		<!-- Food Radar Chart section -->
+		<view class="radar-section">
+			<text class="section-title">📊 口味雷达图</text>
+			<view class="radar-container">
+				<canvas 
+					canvas-id="radarChart" 
+					class="radar-canvas"
+					@touchstart="onRadarTouch"
+				></canvas>
+				<view class="radar-legend">
+					<view v-for="(pref, key) in preferences" :key="key" class="legend-item">
+						<view class="legend-color" :style="{ backgroundColor: getRadarColor(key) }"></view>
+						<text class="legend-label">{{ getPreferenceLabel(key) }}</text>
+					</view>
+				</view>
 			</view>
 		</view>
 
@@ -87,6 +103,7 @@
 						activeColor="#6366f1"
 						backgroundColor="#e2e8f0"
 						@change="updatePreference(key, $event)"
+						class="compact-slider"
 					/>
 				</view>
 			</view>
@@ -147,6 +164,9 @@ export default {
 	onLoad() {
 		this.initializeApp();
 		this.fetchRecommendations();
+	},
+	onReady() {
+		this.drawRadarChart();
 	},
 	methods: {
 		initializeApp() {
@@ -222,6 +242,7 @@ export default {
 		},
 		updatePreference(key, event) {
 			this.preferences[key] = event.detail.value;
+			this.drawRadarChart(); // Redraw radar chart
 			clearTimeout(this.debounceTimer);
 			this.debounceTimer = setTimeout(() => {
 				this.fetchRecommendations();
@@ -324,6 +345,96 @@ export default {
 			uni.navigateTo({
 				url: '/pages/test-api/test-api'
 			});
+		},
+		getRadarColor(key) {
+			const colors = {
+				healthy: '#10b981',
+				difficulty: '#f59e0b',
+				vegetarian: '#84cc16',
+				spicy: '#ef4444',
+				sweetness: '#8b5cf6'
+			};
+			return colors[key] || '#6366f1';
+		},
+		drawRadarChart() {
+			const ctx = uni.createCanvasContext('radarChart', this);
+			const centerX = 150;
+			const centerY = 150;
+			const radius = 100;
+			const sides = Object.keys(this.preferences).length;
+			
+			// Clear canvas
+			ctx.clearRect(0, 0, 300, 300);
+			
+			// Draw background grid
+			ctx.setStrokeStyle('#ffffff40');
+			ctx.setLineWidth(1);
+			
+			// Draw concentric circles
+			for (let i = 1; i <= 5; i++) {
+				ctx.beginPath();
+				ctx.arc(centerX, centerY, (radius * i) / 5, 0, 2 * Math.PI);
+				ctx.stroke();
+			}
+			
+			// Draw axis lines
+			const angleStep = (2 * Math.PI) / sides;
+			const labels = Object.keys(this.preferences);
+			
+			for (let i = 0; i < sides; i++) {
+				const angle = i * angleStep - Math.PI / 2;
+				const x = centerX + Math.cos(angle) * radius;
+				const y = centerY + Math.sin(angle) * radius;
+				
+				ctx.beginPath();
+				ctx.moveTo(centerX, centerY);
+				ctx.lineTo(x, y);
+				ctx.stroke();
+			}
+			
+			// Draw data polygon
+			ctx.setStrokeStyle('#6366f1');
+			ctx.setFillStyle('#6366f140');
+			ctx.setLineWidth(2);
+			ctx.beginPath();
+			
+			for (let i = 0; i < sides; i++) {
+				const angle = i * angleStep - Math.PI / 2;
+				const value = this.preferences[labels[i]];
+				const distance = (radius * value) / 10;
+				const x = centerX + Math.cos(angle) * distance;
+				const y = centerY + Math.sin(angle) * distance;
+				
+				if (i === 0) {
+					ctx.moveTo(x, y);
+				} else {
+					ctx.lineTo(x, y);
+				}
+			}
+			
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+			
+			// Draw data points
+			ctx.setFillStyle('#6366f1');
+			for (let i = 0; i < sides; i++) {
+				const angle = i * angleStep - Math.PI / 2;
+				const value = this.preferences[labels[i]];
+				const distance = (radius * value) / 10;
+				const x = centerX + Math.cos(angle) * distance;
+				const y = centerY + Math.sin(angle) * distance;
+				
+				ctx.beginPath();
+				ctx.arc(x, y, 4, 0, 2 * Math.PI);
+				ctx.fill();
+			}
+			
+			ctx.draw();
+		},
+		onRadarTouch(e) {
+			// Handle radar chart touch interactions if needed
+			console.log('Radar chart touched', e);
 		}
 	}
 }
@@ -421,44 +532,33 @@ export default {
 	margin-bottom: 30rpx;
 }
 
-.preset-grid {
-	display: grid;
-	grid-template-columns: repeat(2, 1fr);
+.preset-row {
+	display: flex;
+	justify-content: space-around;
+	align-items: center;
 	gap: 20rpx;
+	padding: 0 20rpx;
 }
 
-.preset-btn {
+.preset-icon-btn {
+	width: 80rpx;
+	height: 80rpx;
 	background: rgba(255, 255, 255, 0.15);
 	backdrop-filter: blur(10px);
-	border-radius: 20rpx;
-	padding: 30rpx 20rpx;
-	text-align: center;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	transition: all 0.3s ease;
 }
 
-.preset-btn:active {
-	transform: scale(0.95);
+.preset-icon-btn:active {
+	transform: scale(0.9);
 	background: rgba(255, 255, 255, 0.25);
 }
 
 .preset-emoji {
-	font-size: 40rpx;
-	display: block;
-	margin-bottom: 10rpx;
-}
-
-.preset-name {
-	font-size: 26rpx;
-	font-weight: bold;
-	color: white;
-	display: block;
-	margin-bottom: 5rpx;
-}
-
-.preset-desc {
-	font-size: 22rpx;
-	color: rgba(255, 255, 255, 0.8);
-	display: block;
+	font-size: 36rpx;
 }
 
 .preset-random {
@@ -494,47 +594,56 @@ export default {
 	color: white;
 }
 
+.search-row {
+	display: flex;
+	gap: 20rpx;
+	align-items: center;
+	margin-bottom: 20rpx;
+}
+
 .search-input-wrapper {
 	position: relative;
-	margin-bottom: 20rpx;
+	flex: 1;
 }
 
 .search-input {
 	width: 100%;
-	padding: 25rpx 30rpx;
+	padding: 20rpx 25rpx;
 	border-radius: 50rpx;
 	background: rgba(255, 255, 255, 0.9);
 	border: none;
-	font-size: 28rpx;
+	font-size: 26rpx;
 	box-sizing: border-box;
 }
 
 .clear-btn {
 	position: absolute;
-	right: 30rpx;
+	right: 25rpx;
 	top: 50%;
 	transform: translateY(-50%);
-	width: 40rpx;
-	height: 40rpx;
+	width: 35rpx;
+	height: 35rpx;
 	border-radius: 50%;
 	background: rgba(0, 0, 0, 0.1);
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	font-size: 24rpx;
+	font-size: 20rpx;
 	color: #666;
 }
 
 .search-btn {
-	width: 100%;
-	padding: 25rpx;
-	border-radius: 50rpx;
+	width: 80rpx;
+	height: 60rpx;
+	border-radius: 30rpx;
 	background: linear-gradient(45deg, #10b981, #059669);
 	color: white;
 	border: none;
-	font-size: 28rpx;
+	font-size: 24rpx;
 	font-weight: bold;
-	margin-bottom: 20rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .search-btn[disabled] {
@@ -545,6 +654,50 @@ export default {
 	text-align: center;
 	font-size: 22rpx;
 	color: rgba(255, 255, 255, 0.8);
+}
+
+.radar-section {
+	padding: 0 30rpx 40rpx;
+}
+
+.radar-container {
+	background: rgba(255, 255, 255, 0.15);
+	backdrop-filter: blur(10px);
+	border-radius: 25rpx;
+	padding: 30rpx;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.radar-canvas {
+	width: 300rpx;
+	height: 300rpx;
+	margin-bottom: 30rpx;
+}
+
+.radar-legend {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 20rpx;
+}
+
+.legend-item {
+	display: flex;
+	align-items: center;
+	gap: 8rpx;
+}
+
+.legend-color {
+	width: 16rpx;
+	height: 16rpx;
+	border-radius: 50%;
+}
+
+.legend-label {
+	font-size: 22rpx;
+	color: white;
 }
 
 .preferences-section {
@@ -559,7 +712,7 @@ export default {
 }
 
 .preference-item {
-	margin-bottom: 40rpx;
+	margin-bottom: 25rpx;
 }
 
 .preference-item:last-child {
@@ -570,22 +723,27 @@ export default {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	margin-bottom: 20rpx;
+	margin-bottom: 15rpx;
 }
 
 .preference-label {
-	font-size: 28rpx;
+	font-size: 24rpx;
 	color: white;
 	font-weight: bold;
 }
 
 .preference-value {
-	font-size: 28rpx;
+	font-size: 24rpx;
 	color: #fbbf24;
 	font-weight: bold;
 	background: rgba(251, 191, 36, 0.2);
-	padding: 5rpx 15rpx;
-	border-radius: 15rpx;
+	padding: 3rpx 12rpx;
+	border-radius: 12rpx;
+}
+
+.compact-slider {
+	transform: scale(0.8);
+	transform-origin: left center;
 }
 
 .recommendations-section {
