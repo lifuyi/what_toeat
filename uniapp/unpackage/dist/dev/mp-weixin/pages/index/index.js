@@ -106,21 +106,31 @@ var render = function () {
   var g0 = _vm.searchTerm.trim()
   var l0 = _vm.__map(_vm.preferences, function (pref, key) {
     var $orig = _vm.__get_orig(pref)
-    var m0 = _vm.getPreferenceLabel(key)
+    var m0 = _vm.getRadarColor(key)
+    var m1 = _vm.getPreferenceLabel(key)
     return {
       $orig: $orig,
       m0: m0,
+      m1: m1,
     }
   })
-  var l2 = !_vm.loading
+  var l1 = _vm.__map(_vm.preferences, function (pref, key) {
+    var $orig = _vm.__get_orig(pref)
+    var m2 = _vm.getPreferenceLabel(key)
+    return {
+      $orig: $orig,
+      m2: m2,
+    }
+  })
+  var l3 = !_vm.loading
     ? _vm.__map(_vm.recommendedDishes, function (dish, index) {
         var $orig = _vm.__get_orig(dish)
         var g1 = dish.matchScore ? Math.round(dish.matchScore) : null
-        var l1 = dish.tags.slice(0, 3)
+        var l2 = dish.tags.slice(0, 3)
         return {
           $orig: $orig,
           g1: g1,
-          l1: l1,
+          l2: l2,
         }
       })
     : null
@@ -130,7 +140,8 @@ var render = function () {
       $root: {
         g0: g0,
         l0: l0,
-        l2: l2,
+        l1: l1,
+        l3: l3,
       },
     }
   )
@@ -199,6 +210,9 @@ var _default = {
   onLoad: function onLoad() {
     this.initializeApp();
     this.fetchRecommendations();
+  },
+  onReady: function onReady() {
+    this.drawRadarChart();
   },
   methods: {
     initializeApp: function initializeApp() {
@@ -274,6 +288,7 @@ var _default = {
     updatePreference: function updatePreference(key, event) {
       var _this2 = this;
       this.preferences[key] = event.detail.value;
+      this.drawRadarChart(); // Redraw radar chart
       clearTimeout(this.debounceTimer);
       this.debounceTimer = setTimeout(function () {
         _this2.fetchRecommendations();
@@ -335,7 +350,7 @@ var _default = {
               case 18:
                 _context.prev = 18;
                 _context.t0 = _context["catch"](1);
-                uni.__f__("error", '获取推荐失败:', _context.t0, " at pages/index/index.vue:268");
+                uni.__f__("error", '获取推荐失败:', _context.t0, " at pages/index/index.vue:289");
                 _api.default.handleApiError(_context.t0);
 
                 // 失败时使用备用数据
@@ -410,6 +425,89 @@ var _default = {
       uni.navigateTo({
         url: '/pages/test-api/test-api'
       });
+    },
+    getRadarColor: function getRadarColor(key) {
+      var colors = {
+        healthy: '#10b981',
+        difficulty: '#f59e0b',
+        vegetarian: '#84cc16',
+        spicy: '#ef4444',
+        sweetness: '#8b5cf6'
+      };
+      return colors[key] || '#6366f1';
+    },
+    drawRadarChart: function drawRadarChart() {
+      var ctx = uni.createCanvasContext('radarChart', this);
+      var centerX = 150;
+      var centerY = 150;
+      var radius = 100;
+      var sides = Object.keys(this.preferences).length;
+
+      // Clear canvas
+      ctx.clearRect(0, 0, 300, 300);
+
+      // Draw background grid
+      ctx.setStrokeStyle('rgba(255, 255, 255, 0.25)');
+      ctx.setLineWidth(1);
+
+      // Draw concentric circles
+      for (var i = 1; i <= 5; i++) {
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius * i / 5, 0, 2 * Math.PI);
+        ctx.stroke();
+      }
+
+      // Draw axis lines
+      var angleStep = 2 * Math.PI / sides;
+      var labels = Object.keys(this.preferences);
+      for (var _i = 0; _i < sides; _i++) {
+        var angle = _i * angleStep - Math.PI / 2;
+        var x = centerX + Math.cos(angle) * radius;
+        var y = centerY + Math.sin(angle) * radius;
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+      }
+
+      // Draw data polygon
+      ctx.setStrokeStyle('#6366f1');
+      ctx.setFillStyle('rgba(99, 102, 241, 0.25)');
+      ctx.setLineWidth(2);
+      ctx.beginPath();
+      for (var _i2 = 0; _i2 < sides; _i2++) {
+        var _angle = _i2 * angleStep - Math.PI / 2;
+        var value = this.preferences[labels[_i2]];
+        var distance = radius * value / 10;
+        var _x = centerX + Math.cos(_angle) * distance;
+        var _y = centerY + Math.sin(_angle) * distance;
+        if (_i2 === 0) {
+          ctx.moveTo(_x, _y);
+        } else {
+          ctx.lineTo(_x, _y);
+        }
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Draw data points
+      ctx.setFillStyle('#6366f1');
+      for (var _i3 = 0; _i3 < sides; _i3++) {
+        var _angle2 = _i3 * angleStep - Math.PI / 2;
+        var _value = this.preferences[labels[_i3]];
+        var _distance = radius * _value / 10;
+        var _x2 = centerX + Math.cos(_angle2) * _distance;
+        var _y2 = centerY + Math.sin(_angle2) * _distance;
+        ctx.beginPath();
+        ctx.arc(_x2, _y2, 4, 0, 2 * Math.PI);
+        ctx.fill();
+      }
+      ctx.draw();
+    },
+    onRadarTouch: function onRadarTouch(e) {
+      // Handle radar chart touch interactions if needed
+      uni.__f__("log", 'Radar chart touched', e, " at pages/index/index.vue:437");
     }
   }
 };

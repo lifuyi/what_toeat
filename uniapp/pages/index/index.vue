@@ -367,7 +367,7 @@ export default {
 			ctx.clearRect(0, 0, 300, 300);
 			
 			// Draw background grid
-			ctx.setStrokeStyle('#ffffff40');
+			ctx.setStrokeStyle('rgba(255, 255, 255, 0.25)');
 			ctx.setLineWidth(1);
 			
 			// Draw concentric circles
@@ -394,7 +394,7 @@ export default {
 			
 			// Draw data polygon
 			ctx.setStrokeStyle('#6366f1');
-			ctx.setFillStyle('#6366f140');
+			ctx.setFillStyle('rgba(99, 102, 241, 0.25)');
 			ctx.setLineWidth(2);
 			ctx.beginPath();
 			
