@@ -119,10 +119,66 @@ export async function fetchRecipes(signal?: AbortSignal): Promise<Recipe[]> {
   }
 }
 
-// Search recipes by query
-export async function searchRecipes(query: string, signal?: AbortSignal): Promise<Recipe[]> {
+// Search recipes by ingredients using the new dedicated endpoint
+export async function searchRecipesByIngredients(query: string, mode: 'and' | 'or' = 'and', signal?: AbortSignal): Promise<{
+  query: string;
+  ingredients: string[];
+  mode: string;
+  total: number;
+  searchTime?: string;
+  results: Recipe[];
+}> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/recipes?query=${encodeURIComponent(query)}`, { signal });
+    const params = new URLSearchParams({
+      query: query,
+      mode: mode,
+      limit: '12'
+    });
+    
+    const response = await fetch(`${API_BASE_URL}/api/recipes/ingredients?${params}`, { signal });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    
+    return {
+      query: data.query || query,
+      ingredients: data.ingredients || query.split(/\s+/).filter(term => term.trim()),
+      mode: data.mode || mode,
+      total: data.total || data.results?.length || 0,
+      searchTime: data.searchTime,
+      results: data.results || []
+    };
+  } catch (error) {
+    console.error('Error searching recipes by ingredients:', error);
+    // 如果专门接口失败，回退到改进的通用接口
+    try {
+      const fallbackResults = await searchRecipes(query, mode, signal);
+      const ingredients = query.split(/\s+/).filter(term => term.trim());
+      return {
+        query: query,
+        ingredients: ingredients,
+        mode: mode,
+        total: fallbackResults.length,
+        results: fallbackResults
+      };
+    } catch (fallbackError) {
+      console.error('Fallback ingredient search also failed:', fallbackError);
+      throw error;
+    }
+  }
+}
+
+// Search recipes by query (improved with ingredient mode support)
+export async function searchRecipes(query: string, ingredientMode: 'and' | 'or' = 'or', signal?: AbortSignal): Promise<Recipe[]> {
+  try {
+    const params = new URLSearchParams({
+      query: encodeURIComponent(query),
+      ingredient_mode: ingredientMode,
+      fields: 'yl'
+    });
+    
+    const response = await fetch(`${API_BASE_URL}/api/recipes?${params}`, { signal });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -131,7 +187,7 @@ export async function searchRecipes(query: string, signal?: AbortSignal): Promis
     // 如果API返回空结果，尝试获取所有数据并在前端搜索
     if (!results || results.length === 0) {
       const allRecipes = await fetchRecipes(signal);
-      return performClientSideSearch(allRecipes, query);
+      return performClientSideSearch(allRecipes, query, ingredientMode);
     }
     
     return results;
@@ -140,7 +196,7 @@ export async function searchRecipes(query: string, signal?: AbortSignal): Promis
     // 如果API完全失败，尝试获取所有数据并在前端搜索
     try {
       const allRecipes = await fetchRecipes(signal);
-      return performClientSideSearch(allRecipes, query);
+      return performClientSideSearch(allRecipes, query, ingredientMode);
     } catch (fallbackError) {
       console.error('Fallback search also failed:', fallbackError);
       throw error;
@@ -148,14 +204,13 @@ export async function searchRecipes(query: string, signal?: AbortSignal): Promis
   }
 }
 
-// 智能搜索函数：同时支持AND搜索和整体词组搜索
-function performClientSideSearch(allRecipes: Recipe[], query: string): Recipe[] {
+// 智能搜索函数：支持AND/OR模式搜索
+function performClientSideSearch(allRecipes: Recipe[], query: string, mode: 'and' | 'or' = 'or'): Recipe[] {
   const searchTerms = query.split(/\s+/).filter(term => term.trim());
   
-  // 如果是多个词，同时进行AND搜索和整体搜索，然后合并去重
-  if (searchTerms.length > 1) {
+  if (mode === 'and') {
     // AND搜索：每个关键词都必须匹配
-    const andResults = allRecipes.filter(recipe => {
+    return allRecipes.filter(recipe => {
       return searchTerms.every(term => {
         const lowerTerm = term.toLowerCase();
         return (
@@ -169,42 +224,21 @@ function performClientSideSearch(allRecipes: Recipe[], query: string): Recipe[] 
         );
       });
     });
-    
-    // 整体搜索：匹配完整查询词组（去掉空格）
-    const phraseQuery = searchTerms.join('');
-    const phraseResults = allRecipes.filter(recipe => {
-      return (
-        (recipe.title && recipe.title.toLowerCase().includes(phraseQuery)) ||
-        (recipe.desc && recipe.desc.toLowerCase().includes(phraseQuery)) ||
-        (recipe.yl && recipe.yl.toLowerCase().includes(phraseQuery)) ||
-        (recipe.fl && recipe.fl.toLowerCase().includes(phraseQuery))
-      );
-    });
-    
-    // 合并结果并去重，优先显示整体匹配的结果
-    const combinedResults = [...phraseResults];
-    andResults.forEach(recipe => {
-      if (!combinedResults.find(r => r.id === recipe.id)) {
-        combinedResults.push(recipe);
-      }
-    });
-    
-    return combinedResults;
   } else {
-    // 单个词的搜索
-    const term = searchTerms[0];
-    const lowerTerm = term.toLowerCase();
-    
+    // OR搜索：任一关键词匹配即可
     return allRecipes.filter(recipe => {
-      return (
-        (recipe.title && recipe.title.toLowerCase().includes(lowerTerm)) ||
-        (recipe.desc && recipe.desc.toLowerCase().includes(lowerTerm)) ||
-        (recipe.yl && recipe.yl.toLowerCase().includes(lowerTerm)) ||
-        (recipe.fl && recipe.fl.toLowerCase().includes(lowerTerm)) ||
-        // 支持特定的同义词匹配
-        (lowerTerm === '蛋' && ((recipe.title && recipe.title.toLowerCase().includes('鸡蛋')) || (recipe.yl && recipe.yl.toLowerCase().includes('鸡蛋')))) ||
-        (lowerTerm === '鸡蛋' && ((recipe.title && recipe.title.toLowerCase().includes('蛋')) || (recipe.yl && recipe.yl.toLowerCase().includes('蛋'))))
-      );
+      return searchTerms.some(term => {
+        const lowerTerm = term.toLowerCase();
+        return (
+          (recipe.title && recipe.title.toLowerCase().includes(lowerTerm)) ||
+          (recipe.desc && recipe.desc.toLowerCase().includes(lowerTerm)) ||
+          (recipe.yl && recipe.yl.toLowerCase().includes(lowerTerm)) ||
+          (recipe.fl && recipe.fl.toLowerCase().includes(lowerTerm)) ||
+          // 支持特定的同义词匹配
+          (lowerTerm === '蛋' && ((recipe.title && recipe.title.toLowerCase().includes('鸡蛋')) || (recipe.yl && recipe.yl.toLowerCase().includes('鸡蛋')))) ||
+          (lowerTerm === '鸡蛋' && ((recipe.title && recipe.title.toLowerCase().includes('蛋')) || (recipe.yl && recipe.yl.toLowerCase().includes('蛋'))))
+        );
+      });
     });
   }
 }

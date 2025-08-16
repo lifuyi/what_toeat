@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { DishCard } from './DishCard';
 import { DishDetailDialog } from './DishDetailDialog';
 import { Preferences } from './RadarController';
-import { getRecommendedRecipes, searchRecipes, convertRecipeToDish } from '../services/api';
+import { getRecommendedRecipes, searchRecipes, searchRecipesByIngredients, convertRecipeToDish } from '../services/api';
 
 export interface Dish {
   id: string;
@@ -44,6 +44,13 @@ const DishRecommendationComponent = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentSearchTerm, setCurrentSearchTerm] = useState<string | null>(null);
+  const [searchInfo, setSearchInfo] = useState<{
+    query: string;
+    ingredients: string[];
+    mode: string;
+    total: number;
+    searchTime?: string;
+  } | null>(null);
 
   // 计算菜品匹配度 - 使用 useMemo 缓存计算函数
   const calculateMatchScore = useMemo(() => (dish: Dish): number => {
@@ -111,39 +118,66 @@ const DishRecommendationComponent = ({
       // 检查是否有食材搜索
       const ingredientSearch = localStorage.getItem('ingredientSearch');
       setCurrentSearchTerm(ingredientSearch);
-      let recipes;
       
+      let convertedDishes;
       if (ingredientSearch) {
-        // 使用食材搜索API
-        recipes = await searchRecipes(ingredientSearch, controller.signal);
+        // 使用新的专门食材搜索API
+        const ingredients = ingredientSearch.split(/\s+/).filter(term => term.trim());
+        const searchMode = ingredients.length === 1 ? 'or' : 'and'; // 智能选择模式
+        
+        try {
+          const searchResult = await searchRecipesByIngredients(ingredientSearch, searchMode, controller.signal);
+          setSearchInfo(searchResult);
+          
+          // 转换为前端格式，保留匹配信息
+          convertedDishes = searchResult.results.map(recipe => {
+            const dish = convertRecipeToDish(recipe);
+            return {
+              ...dish,
+              matchScore: (recipe as any).matchScore || 100,
+              matchPercentage: (recipe as any).matchPercentage,
+              matchedIngredients: (recipe as any).matchedIngredients
+            };
+          });
+        } catch (error) {
+          console.warn('专门食材搜索API失败，回退到通用搜索:', error);
+          // 回退到改进的通用搜索API
+          const recipes = await searchRecipes(ingredientSearch, searchMode, controller.signal);
+          setSearchInfo({
+            query: ingredientSearch,
+            ingredients: ingredients,
+            mode: searchMode,
+            total: recipes.length
+          });
+          
+          convertedDishes = recipes.map(recipe => {
+            const dish = convertRecipeToDish(recipe);
+            return {
+              ...dish,
+              matchScore: 100
+            };
+          });
+        }
       } else {
-        // 使用偏好推荐API
-        recipes = await getRecommendedRecipes(preferences, controller.signal);
+        // 使用推荐API
+        setSearchInfo(null);
+        const recipes = await getRecommendedRecipes(preferences, controller.signal);
+        convertedDishes = recipes
+          .map(recipe => convertRecipeToDish(recipe))
+          .map(dish => ({
+            ...dish,
+            matchScore: calculateMatchScore(dish)
+          }))
+          .slice(0, 36); // 先扩大候选池，便于多样化抽样
       }
-      
-      const convertedDishes = recipes
-        .map(recipe => convertRecipeToDish(recipe))
-        .map(dish => ({
-          ...dish,
-          matchScore: ingredientSearch ? 100 : calculateMatchScore(dish) // 食材搜索结果给满分
-        }))
-        .slice(0, 36); // 先扩大候选池，便于多样化抽样
-      
-      
-      // 过滤API搜索结果，只保留真正匹配的菜品
-      let filteredApiResults = convertedDishes;
-      if (ingredientSearch && convertedDishes.length > 0) {
-        filteredApiResults = performSmartDishSearch(convertedDishes, ingredientSearch);
-      }
-      
-      // 如果API搜索结果为空或过滤后无匹配，使用mock数据
-      if (ingredientSearch && filteredApiResults.length === 0) {
+
+      // 如果API结果为空且是食材搜索，回退到mock数据
+      if (ingredientSearch && convertedDishes.length === 0) {
         const mockResults = performSmartDishSearch(mockDishes.map(dish => ({...dish, matchScore: 100})), ingredientSearch);
-        // 搜索时随机性较低，保持相关性
         setDishes(diversifyDishes(mockResults, { alpha: 0.2, limit: 12 }));
+        setSearchInfo(prev => prev ? { ...prev, total: mockResults.length } : null);
       } else {
-        // 非搜索场景给予更高的随机性
-        setDishes(diversifyDishes(filteredApiResults, { alpha: ingredientSearch ? 0.2 : 0.4, limit: 12 }));
+        setDishes(diversifyDishes(convertedDishes, { alpha: ingredientSearch ? 0.2 : 0.4, limit: 12 }));
       }
     } catch (err) {
       console.error('Error fetching recommendations:', err);
@@ -207,13 +241,33 @@ const DishRecommendationComponent = ({
         <CardHeader className="pb-4">
           <CardTitle className="text-center sm:text-left bg-clip-text text-transparent flex items-center gap-2 dark:bg-gradient-to-r dark:from-orange-400 dark:to-red-400 bg-gradient-to-r from-orange-600 to-red-600">
             {currentSearchTerm ? (
-              <>
-                <span className="text-2xl animate-bounce">🔍</span>
-                食材搜索结果
-                <span className="text-sm bg-clip-text text-transparent dark:bg-gradient-to-r dark:from-emerald-400 dark:to-green-400 bg-gradient-to-r from-emerald-600 to-green-600">
-                  "{currentSearchTerm}"
-                </span>
-              </>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl animate-bounce">🔍</span>
+                  食材搜索结果
+                  <span className="text-sm bg-clip-text text-transparent dark:bg-gradient-to-r dark:from-emerald-400 dark:to-green-400 bg-gradient-to-r from-emerald-600 to-green-600">
+                    "{currentSearchTerm}"
+                  </span>
+                </div>
+                {searchInfo && (
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    <span className="dark:text-blue-400 text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-full">
+                      模式: {searchInfo.mode.toUpperCase()}
+                    </span>
+                    <span className="dark:text-purple-400 text-purple-600 bg-purple-50 dark:bg-purple-900/20 px-2 py-1 rounded-full">
+                      结果: {searchInfo.total}条
+                    </span>
+                    {searchInfo.searchTime && (
+                      <span className="dark:text-orange-400 text-orange-600 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-full">
+                        耗时: {searchInfo.searchTime}
+                      </span>
+                    )}
+                    <span className="dark:text-green-400 text-green-600 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded-full">
+                      配料: {searchInfo.ingredients.join(', ')}
+                    </span>
+                  </div>
+                )}
+              </div>
             ) : (
               <>
                 <span className="text-2xl animate-bounce">🎯</span>

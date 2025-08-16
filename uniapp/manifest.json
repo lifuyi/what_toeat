@@ -1,10 +1,11 @@
 {
-    "name" : "食谱推荐",
-    "appid" : "__UNI__RECIPE_APP",
-    "description" : "智能食谱推荐应用",
+    "name" : "今天吃什么",
+    "appid" : "__UNI__WHATTOEAT",
+    "description" : "AI智能美食推荐应用，支持多平台运行",
     "versionName" : "1.0.0",
     "versionCode" : "100",
     "transformPx" : false,
+    /* 5+App特有相关 */
     "app-plus" : {
         "usingComponents" : true,
         "nvueStyleCompiler" : "uni-app",
@@ -15,40 +16,141 @@
             "autoclose" : true,
             "delay" : 0
         },
-        "modules" : {},
+        /* 模块配置 */
+        "modules" : {
+            "OAuth" : {},
+            "Payment" : {},
+            "Push" : {},
+            "Share" : {},
+            "Speech" : {},
+            "VideoPlayer" : {},
+            "LivePusher" : {}
+        },
+        /* 应用发布信息 */
         "distribute" : {
+            /* android打包配置 */
             "android" : {
                 "permissions" : [
-                    "<uses-permission android:name=\"android.permission.CHANGE_NETWORK_STATE\" />",
-                    "<uses-permission android:name=\"android.permission.MOUNT_UNMOUNT_FILESYSTEMS\" />",
-                    "<uses-permission android:name=\"android.permission.VIBRATE\" />",
-                    "<uses-permission android:name=\"android.permission.READ_LOGS\" />",
-                    "<uses-permission android:name=\"android.permission.ACCESS_WIFI_STATE\" />",
-                    "<uses-feature android:name=\"android.hardware.camera.autofocus\" />",
-                    "<uses-permission android:name=\"android.permission.ACCESS_NETWORK_STATE\" />",
-                    "<uses-permission android:name=\"android.permission.CAMERA\" />",
-                    "<uses-permission android:name=\"android.permission.GET_ACCOUNTS\" />",
-                    "<uses-permission android:name=\"android.permission.READ_PHONE_STATE\" />",
-                    "<uses-permission android:name=\"android.permission.CHANGE_WIFI_STATE\" />",
-                    "<uses-permission android:name=\"android.permission.WAKE_LOCK\" />",
-                    "<uses-permission android:name=\"android.permission.FLASHLIGHT\" />",
-                    "<uses-permission android:name=\"android.permission.WRITE_SETTINGS\" />"
-                ]
+                    "<uses-permission android:name=\"android.permission.CHANGE_NETWORK_STATE\"/>",
+                    "<uses-permission android:name=\"android.permission.MOUNT_UNMOUNT_FILESYSTEMS\"/>",
+                    "<uses-permission android:name=\"android.permission.VIBRATE\"/>",
+                    "<uses-permission android:name=\"android.permission.READ_LOGS\"/>",
+                    "<uses-permission android:name=\"android.permission.ACCESS_WIFI_STATE\"/>",
+                    "<uses-permission android:name=\"android.permission.ACCESS_NETWORK_STATE\"/>",
+                    "<uses-permission android:name=\"android.permission.CAMERA\"/>",
+                    "<uses-permission android:name=\"android.permission.GET_ACCOUNTS\"/>",
+                    "<uses-permission android:name=\"android.permission.READ_PHONE_STATE\"/>",
+                    "<uses-permission android:name=\"android.permission.CHANGE_WIFI_STATE\"/>",
+                    "<uses-permission android:name=\"android.permission.WAKE_LOCK\"/>",
+                    "<uses-permission android:name=\"android.permission.FLASHLIGHT\"/>",
+                    "<uses-permission android:name=\"android.permission.WRITE_SETTINGS\"/>",
+                    "<uses-permission android:name=\"android.permission.INTERNET\"/>",
+                    "<uses-permission android:name=\"android.permission.ACCESS_FINE_LOCATION\"/>",
+                    "<uses-permission android:name=\"android.permission.ACCESS_COARSE_LOCATION\"/>",
+                    "<uses-feature android:name=\"android.hardware.camera\"/>",
+                    "<uses-feature android:name=\"android.hardware.camera.autofocus\"/>"
+                ],
+                "abiFilters" : [ "armeabi-v7a", "arm64-v8a", "x86" ]
             },
-            "ios" : {},
-            "sdkConfigs" : {}
+            /* ios打包配置 */
+            "ios" : {
+                "dSYMs" : false
+            },
+            /* SDK配置 */
+            "sdkConfigs" : {
+                "ad" : {}
+            },
+            "icons" : {
+                "android" : {
+                    "hdpi" : "unpackage/res/icons/72x72.png",
+                    "xhdpi" : "unpackage/res/icons/96x96.png",
+                    "xxhdpi" : "unpackage/res/icons/144x144.png",
+                    "xxxhdpi" : "unpackage/res/icons/192x192.png"
+                },
+                "ios" : {
+                    "appstore" : "unpackage/res/icons/1024x1024.png",
+                    "ipad" : {
+                        "app" : "unpackage/res/icons/76x76.png",
+                        "app@2x" : "unpackage/res/icons/152x152.png"
+                    },
+                    "iphone" : {
+                        "app@2x" : "unpackage/res/icons/120x120.png",
+                        "app@3x" : "unpackage/res/icons/180x180.png"
+                    }
+                }
+            }
         }
     },
+    /* H5特有相关 */
+    "h5" : {
+        "title" : "今天吃什么",
+        "template" : "index.html",
+        "router" : {
+            "mode" : "hash",
+            "base" : "./"
+        },
+        "optimization" : {
+            "treeShaking" : {
+                "enable" : true
+            }
+        },
+        "publicPath" : "./",
+        "sdkConfigs" : {
+            "maps" : {}
+        }
+    },
+    /* 快应用特有相关 */
     "quickapp" : {},
+    /* 小程序特有相关 */
     "mp-weixin" : {
         "appid" : "",
         "setting" : {
-            "urlCheck" : false
+            "urlCheck" : false,
+            "es6" : true,
+            "enhance" : true,
+            "postcss" : true,
+            "preloadBackgroundData" : false,
+            "minified" : true,
+            "newFeature" : false,
+            "coverView" : true,
+            "nodeModules" : false,
+            "autoAudits" : false,
+            "showShadowRootInWxmlPanel" : true,
+            "scopeDataCheck" : false,
+            "uglifyFileName" : false,
+            "checkInvalidKey" : true,
+            "checkSiteMap" : true,
+            "uploadWithSourceMap" : true,
+            "compileHotReLoad" : false,
+            "lazyloadPlaceholderEnable" : false,
+            "useMultiFrameRuntime" : true,
+            "useApiHook" : true,
+            "useApiHostProcess" : true,
+            "babelSetting" : {
+                "ignore" : [],
+                "disablePlugins" : [],
+                "outputPath" : ""
+            },
+            "enableEngineNative" : false,
+            "useIsolateContext" : true,
+            "userConfirmedBundleSwitch" : false,
+            "packNpmManually" : false,
+            "packNpmRelationList" : [],
+            "minifyWXSS" : true,
+            "disableUseStrict" : false,
+            "minifyWXML" : true
         },
-        "usingComponents" : true
+        "usingComponents" : true,
+        "permission" : {
+            "scope.userLocation" : {
+                "desc" : "您的位置信息将用于为您推荐附近的美食"
+            }
+        },
+        "requiredPrivateInfos" : [ "getLocation" ]
     },
     "mp-alipay" : {
-        "usingComponents" : true
+        "usingComponents" : true,
+        "enableAppxNg" : true
     },
     "mp-baidu" : {
         "usingComponents" : true
@@ -56,13 +158,23 @@
     "mp-toutiao" : {
         "usingComponents" : true
     },
+    "mp-lark" : {
+        "usingComponents" : true
+    },
+    "mp-qq" : {
+        "usingComponents" : true
+    },
+    "mp-kuaishou" : {
+        "usingComponents" : true
+    },
+    "mp-jd" : {
+        "usingComponents" : true
+    },
+    "mp-360" : {
+        "usingComponents" : true
+    },
     "uniStatistics" : {
         "enable" : false
     },
-    "h5" : {
-        "router" : {
-            "mode" : "hash",
-            "base" : "./"
-        }
-    }
+    "vueVersion" : "2"
 }

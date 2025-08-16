@@ -1,0 +1,316 @@
+
+.container {
+	min-height: 100vh;
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	position: relative;
+}
+.header {
+	padding: 40rpx 30rpx;
+	text-align: center;
+}
+.header-content {
+	background: rgba(255, 255, 255, 0.1);
+	-webkit-backdrop-filter: blur(10px);
+	        backdrop-filter: blur(10px);
+	border-radius: 30rpx;
+	padding: 40rpx;
+}
+.greeting-section {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-bottom: 20rpx;
+}
+.emoji {
+	font-size: 60rpx;
+	margin: 0 20rpx;
+}
+.greeting-text {
+	font-size: 48rpx;
+	font-weight: bold;
+	color: white;
+	text-shadow: 0 2rpx 4rpx rgba(0,0,0,0.3);
+}
+.subtitle {
+	font-size: 28rpx;
+	color: rgba(255, 255, 255, 0.9);
+	margin-bottom: 20rpx;
+}
+.date-info {
+	margin-bottom: 30rpx;
+}
+.date-text {
+	font-size: 24rpx;
+	color: rgba(255, 255, 255, 0.8);
+}
+.tags {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 20rpx;
+}
+.tag {
+	padding: 10rpx 20rpx;
+	border-radius: 50rpx;
+	font-size: 22rpx;
+	color: white;
+}
+.tag-ai {
+	background: linear-gradient(45deg, #3b82f6, #06b6d4);
+}
+.tag-realtime {
+	background: linear-gradient(45deg, #10b981, #84cc16);
+}
+.tag-personal {
+	background: linear-gradient(45deg, #f59e0b, #ef4444);
+}
+.preset-section {
+	padding: 0 30rpx 40rpx;
+}
+.section-title {
+	display: block;
+	text-align: center;
+	font-size: 32rpx;
+	font-weight: bold;
+	color: white;
+	margin-bottom: 30rpx;
+}
+.preset-grid {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 20rpx;
+}
+.preset-btn {
+	background: rgba(255, 255, 255, 0.15);
+	-webkit-backdrop-filter: blur(10px);
+	        backdrop-filter: blur(10px);
+	border-radius: 20rpx;
+	padding: 30rpx 20rpx;
+	text-align: center;
+	transition: all 0.3s ease;
+}
+.preset-btn:active {
+	-webkit-transform: scale(0.95);
+	        transform: scale(0.95);
+	background: rgba(255, 255, 255, 0.25);
+}
+.preset-emoji {
+	font-size: 40rpx;
+	display: block;
+	margin-bottom: 10rpx;
+}
+.preset-name {
+	font-size: 26rpx;
+	font-weight: bold;
+	color: white;
+	display: block;
+	margin-bottom: 5rpx;
+}
+.preset-desc {
+	font-size: 22rpx;
+	color: rgba(255, 255, 255, 0.8);
+	display: block;
+}
+.preset-random {
+	background: linear-gradient(45deg, #8b5cf6, #6366f1);
+}
+.search-section {
+	padding: 0 30rpx 40rpx;
+}
+.search-card {
+	background: rgba(255, 255, 255, 0.15);
+	-webkit-backdrop-filter: blur(10px);
+	        backdrop-filter: blur(10px);
+	border-radius: 25rpx;
+	padding: 40rpx;
+}
+.search-header {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-bottom: 30rpx;
+}
+.search-emoji {
+	font-size: 40rpx;
+	margin-right: 15rpx;
+}
+.search-title {
+	font-size: 32rpx;
+	font-weight: bold;
+	color: white;
+}
+.search-input-wrapper {
+	position: relative;
+	margin-bottom: 20rpx;
+}
+.search-input {
+	width: 100%;
+	padding: 25rpx 30rpx;
+	border-radius: 50rpx;
+	background: rgba(255, 255, 255, 0.9);
+	border: none;
+	font-size: 28rpx;
+	box-sizing: border-box;
+}
+.clear-btn {
+	position: absolute;
+	right: 30rpx;
+	top: 50%;
+	-webkit-transform: translateY(-50%);
+	        transform: translateY(-50%);
+	width: 40rpx;
+	height: 40rpx;
+	border-radius: 50%;
+	background: rgba(0, 0, 0, 0.1);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 24rpx;
+	color: #666;
+}
+.search-btn {
+	width: 100%;
+	padding: 25rpx;
+	border-radius: 50rpx;
+	background: linear-gradient(45deg, #10b981, #059669);
+	color: white;
+	border: none;
+	font-size: 28rpx;
+	font-weight: bold;
+	margin-bottom: 20rpx;
+}
+.search-btn[disabled] {
+	opacity: 0.5;
+}
+.search-tip {
+	text-align: center;
+	font-size: 22rpx;
+	color: rgba(255, 255, 255, 0.8);
+}
+.preferences-section {
+	padding: 0 30rpx 40rpx;
+}
+.preference-controls {
+	background: rgba(255, 255, 255, 0.15);
+	-webkit-backdrop-filter: blur(10px);
+	        backdrop-filter: blur(10px);
+	border-radius: 25rpx;
+	padding: 40rpx;
+}
+.preference-item {
+	margin-bottom: 40rpx;
+}
+.preference-item:last-child {
+	margin-bottom: 0;
+}
+.preference-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 20rpx;
+}
+.preference-label {
+	font-size: 28rpx;
+	color: white;
+	font-weight: bold;
+}
+.preference-value {
+	font-size: 28rpx;
+	color: #fbbf24;
+	font-weight: bold;
+	background: rgba(251, 191, 36, 0.2);
+	padding: 5rpx 15rpx;
+	border-radius: 15rpx;
+}
+.recommendations-section {
+	padding: 0 30rpx 60rpx;
+}
+.loading {
+	text-align: center;
+	padding: 80rpx;
+	color: white;
+	font-size: 28rpx;
+}
+.dish-grid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 25rpx;
+}
+.dish-card {
+	background: rgba(255, 255, 255, 0.15);
+	-webkit-backdrop-filter: blur(10px);
+	        backdrop-filter: blur(10px);
+	border-radius: 25rpx;
+	padding: 35rpx;
+	transition: all 0.3s ease;
+}
+.dish-card:active {
+	-webkit-transform: scale(0.98);
+	        transform: scale(0.98);
+	background: rgba(255, 255, 255, 0.25);
+}
+.dish-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 15rpx;
+}
+.dish-name {
+	font-size: 32rpx;
+	font-weight: bold;
+	color: white;
+}
+.match-score {
+	background: linear-gradient(45deg, #10b981, #059669);
+	padding: 8rpx 16rpx;
+	border-radius: 20rpx;
+}
+.score-text {
+	font-size: 22rpx;
+	color: white;
+	font-weight: bold;
+}
+.dish-description {
+	font-size: 26rpx;
+	color: rgba(255, 255, 255, 0.9);
+	margin-bottom: 20rpx;
+	line-height: 1.4;
+}
+.dish-meta {
+	display: flex;
+	gap: 30rpx;
+	margin-bottom: 20rpx;
+}
+.meta-item {
+	font-size: 24rpx;
+	color: rgba(255, 255, 255, 0.8);
+}
+.dish-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 15rpx;
+}
+.dish-tag {
+	padding: 8rpx 16rpx;
+	background: rgba(255, 255, 255, 0.2);
+	border-radius: 15rpx;
+	font-size: 22rpx;
+	color: white;
+}
+.test-api-btn {
+	position: absolute;
+	top: 20rpx;
+	right: 20rpx;
+	background: rgba(255, 255, 255, 0.2);
+	-webkit-backdrop-filter: blur(10px);
+	        backdrop-filter: blur(10px);
+	border-radius: 15rpx;
+	padding: 10rpx 20rpx;
+	border: 2rpx solid rgba(255, 255, 255, 0.3);
+}
+.test-text {
+	font-size: 24rpx;
+	color: white;
+	font-weight: bold;
+}
+

@@ -1,248 +1,193 @@
-# 智能食谱推荐 UniApp
+# 今天吃什么 - UniApp多平台美食推荐应用
 
-基于 UniApp 开发的智能食谱推荐应用，与上级 client 文件夹中的 React 应用共享相同的 UI 设计和业务逻辑。
+## 📱 支持平台
 
-## 项目特性
+本应用基于UniApp开发，支持多个平台部署：
 
-### 🎯 核心功能
-- **智能推荐**: 基于用户偏好的个性化菜谱推荐
-- **雷达图控制**: 可视化调整健康度、难度、素食、辣度、甜度偏好
-- **食材搜索**: 根据现有食材智能匹配菜谱
-- **快速预设**: 提供健康饮食、快手料理等预设偏好
-- **菜谱详情**: 详细的制作步骤和食材清单
+### ✅ 已支持平台
 
-### 🎨 UI 特色
-- **渐变背景**: 美观的渐变色彩设计
-- **卡片布局**: 现代化的卡片式界面
-- **动画效果**: 流畅的过渡动画和交互反馈
-- **响应式设计**: 适配不同屏幕尺寸
-- **深色模式**: 支持明暗主题切换
+| 平台 | 状态 | 特殊要求 | 备注 |
+|------|------|----------|------|
+| **H5** | ✅ 完全支持 | CORS配置 | 开发环境可用HTTP，生产环境建议HTTPS |
+| **微信小程序** | ✅ 完全支持 | HTTPS + 域名白名单 | 需在微信公众平台配置服务器域名 |
+| **支付宝小程序** | ✅ 完全支持 | HTTPS + 域名白名单 | 需在支付宝开放平台配置 |
+| **百度小程序** | ✅ 完全支持 | HTTPS + 域名白名单 | 需在百度智能小程序平台配置 |
+| **字节跳动小程序** | ✅ 完全支持 | HTTPS + 域名白名单 | 需在字节跳动开发者平台配置 |
+| **QQ小程序** | ✅ 完全支持 | HTTPS + 域名白名单 | 需在QQ小程序开发者平台配置 |
+| **快手小程序** | ✅ 完全支持 | HTTPS + 域名白名单 | 需在快手开发者平台配置 |
+| **App (Android/iOS)** | ✅ 完全支持 | 无特殊要求 | 可使用HTTP/HTTPS |
 
-### 📱 平台支持
-- **H5**: 浏览器端运行
-- **微信小程序**: 微信生态内使用
-- **支付宝小程序**: 支付宝生态内使用
-- **App**: 原生应用打包
-- **其他小程序**: 百度、头条、QQ等平台
+### 🔧 平台特定配置
 
-## 项目结构
-
-```
-uniapp/
-├── components/              # 组件目录
-│   ├── Header.vue          # 头部组件（主题切换、时间问候）
-│   ├── DateInfo.vue        # 日期信息组件
-│   ├── PresetButtons.vue   # 快速预设按钮
-│   ├── RadarController.vue # 雷达图偏好控制器
-│   ├── IngredientSearch.vue# 食材搜索组件
-│   ├── DishRecommendation.vue # 菜谱推荐列表
-│   ├── DishCard.vue        # 菜谱卡片
-│   └── DishDetailModal.vue # 菜谱详情弹窗
-├── pages/                  # 页面目录
-│   └── index/
-│       └── index.vue       # 主页面
-├── data/                   # 数据目录
-│   └── mockDishes.js       # 模拟菜谱数据
-├── services/               # 服务目录
-│   └── api.js              # API 接口封装
-├── static/                 # 静态资源
-├── App.vue                 # 应用入口
-├── main.js                 # 主入口文件
-├── manifest.json           # 应用配置
-├── pages.json              # 页面配置
-├── uni.scss                # 全局样式变量
-└── package.json            # 项目依赖
-```
-
-## 核心组件说明
-
-### Header 组件
-- 动态时间问候（早上好/中午好/晚上好）
-- 主题切换功能
-- 装饰性动画元素
-- 日期信息展示
-
-### RadarController 组件
-- Canvas 绘制的雷达图
-- 五维偏好调节（健康、难度、素食、辣度、甜度）
-- 实时可视化反馈
-- 滑块控制器
-
-### PresetButtons 组件
-- 6种预设偏好模式
-- 健康饮食、快手料理、家常美味等
-- 一键设置偏好参数
-- 视觉反馈和触觉反馈
-
-### IngredientSearch 组件
-- 食材输入和搜索
-- 常用食材快速选择
-- 已选食材管理
-- 基于食材的菜谱匹配
-
-### DishRecommendation 组件
-- 智能推荐算法
-- 匹配度评分显示
-- 加载状态处理
-- 错误状态处理
-
-## 数据模型
-
-### 偏好对象 (Preferences)
+#### 1. H5平台
 ```javascript
-{
-  healthy: 5,      // 健康度 (1-10)
-  difficulty: 2,   // 难度 (1-3: 简单/中等/困难)
-  vegetarian: 5,   // 素食偏好 (1-10)
-  spicy: 5,        // 辣度 (1-10)
-  sweetness: 5     // 甜度 (1-10)
-}
+// 开发环境
+http://localhost:3001
+
+// 生产环境需要配置CORS
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, DELETE
+Access-Control-Allow-Headers: Content-Type, X-Platform, X-Client
 ```
 
-### 菜谱对象 (Dish)
+#### 2. 微信小程序
 ```javascript
-{
-  id: "1",
-  name: "番茄鸡蛋面",
-  description: "经典家常面条，酸甜可口",
-  ingredients: ["面条", "番茄", "鸡蛋"],
-  steps: ["步骤1", "步骤2"],
-  cookingTime: "15分钟",
-  difficulty: "简单",
-  tags: ["家常", "快手"],
-  category: "面食",
-  scores: {
-    healthy: 8,
-    difficulty: 1,
-    vegetarian: 6,
-    spicy: 2,
-    sweetness: 4
-  }
-}
+// 需要在微信公众平台配置以下域名：
+// 开发管理 -> 开发设置 -> 服务器域名
+
+request合法域名：
+https://your-api-domain.com
+
+// 如果使用本地开发，需要开启"不校验合法域名"
 ```
 
-## 算法说明
+#### 3. 其他小程序平台
+类似微信小程序，都需要在对应的开发者平台配置HTTPS域名白名单。
 
-### 推荐算法
-采用加权评分算法，根据用户偏好计算菜谱匹配度：
-
-```javascript
-权重分配：
-- 健康度: 25%
-- 制作难度: 15%
-- 素食偏好: 20%
-- 辣度偏好: 20%
-- 甜度偏好: 20%
-
-匹配度 = Σ(10 - |用户偏好 - 菜谱评分|) × 权重
-```
-
-### 食材匹配
-基于食材包含关系进行模糊匹配，支持：
-- 完全匹配
-- 部分匹配
-- 按匹配食材数量排序
-
-## 开发指南
+## 🚀 快速开始
 
 ### 环境要求
-- Node.js >= 14.0.0
-- HBuilderX 或 CLI 工具
-- 各平台开发工具（可选）
+- HBuilderX 3.0+
+- Node.js 14+
+- 后端服务器运行在端口3001
 
-### 本地开发
+### 安装步骤
+
+1. **克隆项目**
 ```bash
-# 安装依赖
+git clone <your-repo-url>
+cd Uniapp
+```
+
+2. **配置API地址**
+编辑 `utils/config.js`：
+```javascript
+export const CONFIG = {
+    API: {
+        DEV_BASE_URL: 'http://localhost:3001',  // 开发环境
+        PROD_BASE_URL: 'https://your-api.com', // 生产环境
+    }
+};
+```
+
+3. **启动后端服务器**
+```bash
+cd ../server
 npm install
-
-# H5 开发
-npm run dev:h5
-
-# 微信小程序开发
-npm run dev:mp-weixin
-
-# 支付宝小程序开发
-npm run dev:mp-alipay
+node server.js
 ```
 
-### 构建发布
-```bash
-# H5 构建
-npm run build:h5
+4. **运行UniApp**
+- 在HBuilderX中打开项目
+- 选择运行平台（H5/微信小程序/App等）
+- 点击运行
 
-# 微信小程序构建
-npm run build:mp-weixin
+### 测试API连接
+1. 运行应用后，点击右上角"🔧 API测试"按钮
+2. 依次测试各个功能模块
+3. 查看控制台日志了解详细信息
 
-# App 构建
-npm run build:app-plus
+## 📋 功能特性
+
+### 核心功能
+- ✅ **智能推荐** - 基于口味偏好的AI推荐算法
+- ✅ **食材搜索** - 根据现有食材推荐菜品
+- ✅ **文本搜索** - 按菜品名称搜索
+- ✅ **偏好调节** - 5维度口味偏好控制
+- ✅ **预设配置** - 6种快速偏好模式
+- ✅ **菜品详情** - 完整的制作步骤和食材清单
+
+### 平台适配功能
+- ✅ **自动平台检测** - 根据运行平台自动调整配置
+- ✅ **网络协议适配** - 小程序自动使用HTTPS
+- ✅ **错误处理优化** - 平台特定的错误提示
+- ✅ **存储管理** - 跨平台的本地存储封装
+- ✅ **导航适配** - 平台特定的页面跳转处理
+
+## 🔧 开发指南
+
+### 添加新平台支持
+
+1. **更新manifest.json**
+```json
+{
+    "mp-newplatform": {
+        "usingComponents": true,
+        // 平台特定配置
+    }
+}
 ```
 
-## 与 React 版本的对应关系
+2. **更新config.js**
+```javascript
+// 在getBaseUrl()函数中添加新平台判断
+// #ifdef MP-NEWPLATFORM
+return CONFIG.API.PROD_BASE_URL;
+// #endif
+```
 
-| React 组件 | UniApp 组件 | 功能说明 |
-|------------|-------------|----------|
-| App.tsx | pages/index/index.vue | 主应用入口 |
-| Header.tsx | Header.vue | 头部组件 |
-| RadarController.tsx | RadarController.vue | 雷达图控制器 |
-| PresetButtons.tsx | PresetButtons.vue | 预设按钮 |
-| IngredientSearch.tsx | IngredientSearch.vue | 食材搜索 |
-| DishRecommendation.tsx | DishRecommendation.vue | 菜谱推荐 |
-| DishCard.tsx | DishCard.vue | 菜谱卡片 |
-| services/api.ts | services/api.js | API 服务 |
-| data/mockDishes.ts | data/mockDishes.js | 模拟数据 |
+3. **更新platform.js**
+```javascript
+// 在getPlatform()函数中添加新平台
+// #ifdef MP-NEWPLATFORM
+return 'mp-newplatform';
+// #endif
+```
 
-## 技术栈
+### API接口说明
 
-- **框架**: UniApp + Vue 3
-- **样式**: SCSS + 内置样式变量
-- **图表**: Canvas 原生绘制
-- **状态管理**: Vue 3 Composition API
-- **构建工具**: Vue CLI + UniApp CLI
-- **代码规范**: ESLint
+| 接口 | 方法 | 说明 |
+|------|------|------|
+| `/api/recipes` | GET | 获取所有菜品/搜索菜品 |
+| `/api/recipes/ingredients` | GET | 按食材搜索菜品 |
+| `/api/recommendations` | POST | 获取个性化推荐 |
 
-## 特色功能
+### 数据格式转换
 
-### 1. 智能推荐引擎
-- 多维度偏好分析
-- 实时匹配度计算
-- 个性化排序算法
+后端数据库字段 → 前端显示字段：
+- `title` → `name` (菜品名称)
+- `yl` → `ingredients` (食材列表)
+- `steptext` → `steps` (制作步骤)
+- `健康度` → `scores.healthy` (健康评分)
+- `制作难易` → `scores.difficulty` (难度评分)
 
-### 2. 可视化交互
-- Canvas 雷达图
-- 实时数据更新
-- 流畅动画效果
+## 🐛 常见问题
 
-### 3. 用户体验优化
-- 触觉反馈
-- 加载状态
-- 错误处理
-- 响应式设计
+### 1. 小程序网络请求失败
+**原因**: 未配置服务器域名白名单或使用了HTTP协议
+**解决**: 
+- 确保API使用HTTPS协议
+- 在对应小程序平台配置域名白名单
+- 开发时可开启"不校验合法域名"选项
 
-### 4. 跨平台兼容
-- 统一的 API 接口
-- 平台适配处理
-- 一致的用户体验
+### 2. H5跨域问题
+**原因**: 浏览器CORS策略限制
+**解决**: 在服务器端配置CORS头部
+```javascript
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'X-Platform', 'X-Client']
+}));
+```
 
-## 后续扩展
+### 3. App网络请求超时
+**原因**: 网络环境或服务器响应慢
+**解决**: 
+- 检查网络连接
+- 增加请求超时时间
+- 优化服务器响应速度
 
-### 功能扩展
-- [ ] 用户收藏功能
-- [ ] 菜谱评分系统
-- [ ] 社交分享功能
-- [ ] 购物清单生成
-- [ ] 营养成分分析
-
-### 技术优化
-- [ ] 数据持久化
-- [ ] 离线缓存
-- [ ] 性能监控
-- [ ] 错误上报
-- [ ] A/B 测试
-
-## 许可证
+## 📄 许可证
 
 MIT License
 
----
+## 🤝 贡献
 
-**注意**: 本项目是对上级 client 文件夹中 React 应用的 UniApp 移植版本，保持了相同的 UI 设计和业务逻辑，适配了 UniApp 的开发模式和多端发布需求。
+欢迎提交Issue和Pull Request！
+
+## 📞 联系方式
+
+如有问题，请通过以下方式联系：
+- 提交GitHub Issue
+- 发送邮件至：your-email@example.com

@@ -69,59 +69,58 @@ const db = new sqlite3.Database(dbPath, (err) => {
   }
 });
 
-// API endpoint for recipes
+// API endpoint for recipes (改进版，支持配料AND/OR搜索)
 app.get("/api/recipes", (req, res) => {
   let sql = "SELECT * FROM recipes";
   const params = [];
 
   if (req.query.query) {
-    // 支持按空格分词，词与词之间为 OR 关系；每个词在 title/id/yl 字段上进行匹配
     const raw = String(req.query.query || '').trim();
-    // 兼容全角空格 \u3000
     const terms = raw.split(/[ \t\r\n\u3000]+/).filter(Boolean);
+    
+    // 新增：支持配料搜索模式
+    const ingredientMode = req.query.ingredient_mode || 'or'; // 'and' 或 'or'
+    const searchFields = req.query.fields || 'title,id,yl'; // 可指定搜索字段
+    const fields = searchFields.split(',').filter(field => 
+      ['title', 'id', 'yl', 'desc', 'fl'].includes(field)
+    );
 
     if (terms.length > 0) {
-      const termClauses = terms.map(() => "(title LIKE ? OR id LIKE ? OR yl LIKE ?)");
-      sql += " WHERE " + termClauses.join(" OR ");
-      terms.forEach((term) => {
-        const q = `%${term}%`;
-        params.push(q, q, q);
-      });
+      if (ingredientMode === 'and') {
+        // AND模式：每个词都必须在指定字段中找到
+        const termClauses = terms.map(() => {
+          const fieldClauses = fields.map(field => `${field} LIKE ?`);
+          return `(${fieldClauses.join(' OR ')})`;
+        });
+        sql += " WHERE " + termClauses.join(" AND ");
+        terms.forEach((term) => {
+          const q = `%${term}%`;
+          fields.forEach(() => params.push(q));
+        });
+      } else {
+        // OR模式：任一词在任一字段中找到即可（原有逻辑）
+        const termClauses = terms.map(() => {
+          const fieldClauses = fields.map(field => `${field} LIKE ?`);
+          return `(${fieldClauses.join(' OR ')})`;
+        });
+        sql += " WHERE " + termClauses.join(" OR ");
+        terms.forEach((term) => {
+          const q = `%${term}%`;
+          fields.forEach(() => params.push(q));
+        });
+      }
     }
   } else if (Object.keys(req.query).length > 0) {
     sql += " WHERE 1=1";
     for (const key in req.query) {
       const allowedColumns = [
-        "id",
-        "did",
-        "cid",
-        "zid",
-        "title",
-        "thumb",
-        "videourl",
-        "desc",
-        "difficulty",
-        "costtime",
-        "tip",
-        "yl",
-        "fl",
-        "steptext",
-        "steppic",
-        "grade",
-        "up",
-        "viewnum",
-        "favnum",
-        "outdate",
-        "status",
-        "健康度",
-        "制作难易",
-        "制作速度",
-        "素食偏好",
-        "辛辣程度",
-        "甜度",
+        "id", "did", "cid", "zid", "title", "thumb", "videourl", "desc",
+        "difficulty", "costtime", "tip", "yl", "fl", "steptext", "steppic",
+        "grade", "up", "viewnum", "favnum", "outdate", "status",
+        "健康度", "制作难易", "制作速度", "素食偏好", "辛辣程度", "甜度",
       ];
 
-      if (allowedColumns.includes(key)) {
+      if (allowedColumns.includes(key) && !['ingredient_mode', 'fields'].includes(key)) {
         sql += ` AND ${key} LIKE ?`;
         params.push(`%${req.query[key]}%`);
       }
@@ -136,8 +135,96 @@ app.get("/api/recipes", (req, res) => {
       res.status(500).json({ error: err.message });
       return;
     }
-    console.log(`  Response: ${rows.length} recipes found`);
+    console.log(`  Response: ${rows.length} recipes found (${req.query.ingredient_mode || 'or'} mode)`);
     res.json(rows);
+  });
+});
+
+// 专门的配料搜索接口 - 提供详细的匹配信息和评分
+app.get("/api/recipes/ingredients", (req, res) => {
+  const searchQuery = req.query.query;
+  const searchMode = req.query.mode || 'and'; // 'and' 或 'or'
+  const limit = parseInt(req.query.limit) || 12;
+  
+  if (!searchQuery) {
+    return res.status(400).json({ error: "Query parameter is required" });
+  }
+
+  // 解析搜索词
+  const raw = String(searchQuery).trim();
+  const ingredients = raw.split(/[ \t\r\n\u3000]+/).filter(Boolean);
+  
+  if (ingredients.length === 0) {
+    return res.status(400).json({ error: "No valid ingredients provided" });
+  }
+
+  console.log(`配料搜索: ${ingredients.join(' ')} (${searchMode.toUpperCase()}模式)`);
+
+  let sql, params;
+  
+  if (searchMode === 'and') {
+    // AND模式：所有配料都必须存在
+    const conditions = ingredients.map(() => "yl LIKE ?");
+    sql = `SELECT * FROM recipes WHERE ${conditions.join(" AND ")} ORDER BY grade DESC LIMIT ?`;
+    params = [...ingredients.map(ingredient => `%${ingredient}%`), limit];
+  } else {
+    // OR模式：任一配料存在即可
+    const conditions = ingredients.map(() => "yl LIKE ?");
+    sql = `SELECT * FROM recipes WHERE ${conditions.join(" OR ")} ORDER BY grade DESC LIMIT ?`;
+    params = [...ingredients.map(ingredient => `%${ingredient}%`), limit];
+  }
+
+  const startTime = Date.now();
+  
+  db.all(sql, params, (err, rows) => {
+    const endTime = Date.now();
+    
+    if (err) {
+      console.error('配料搜索错误:', err.message);
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    
+    // 为结果添加匹配度评分
+    const scoredResults = rows.map(recipe => {
+      let matchScore = 0;
+      let matchedIngredients = [];
+      
+      ingredients.forEach(ingredient => {
+        if (recipe.yl && recipe.yl.includes(ingredient)) {
+          matchScore++;
+          matchedIngredients.push(ingredient);
+        }
+      });
+      
+      return {
+        ...recipe,
+        matchScore,
+        matchedIngredients,
+        totalIngredients: ingredients.length,
+        matchPercentage: Math.round((matchScore / ingredients.length) * 100)
+      };
+    });
+    
+    // 按匹配度排序，匹配度相同时按评分排序
+    scoredResults.sort((a, b) => {
+      if (b.matchScore !== a.matchScore) {
+        return b.matchScore - a.matchScore; // 匹配度高的在前
+      }
+      // 匹配度相同时，按评分排序
+      return (b.grade || 0) - (a.grade || 0);
+    });
+    
+    console.log(`  配料搜索完成: ${scoredResults.length}条结果, 耗时${endTime - startTime}ms`);
+    
+    res.json({
+      query: searchQuery,
+      ingredients,
+      mode: searchMode,
+      total: scoredResults.length,
+      searchTime: `${endTime - startTime}ms`,
+      results: scoredResults
+    });
   });
 });
 
