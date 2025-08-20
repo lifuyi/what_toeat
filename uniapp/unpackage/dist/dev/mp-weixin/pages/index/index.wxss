@@ -26,7 +26,7 @@
 	margin: 0 20rpx;
 }
 .greeting-text {
-	font-size: 48rpx;
+	font-size: 36rpx;
 	font-weight: bold;
 	color: white;
 	text-shadow: 0 2rpx 4rpx rgba(0,0,0,0.3);
@@ -108,28 +108,6 @@
 .search-section {
 	padding: 0 30rpx 40rpx;
 }
-.search-card {
-	background: rgba(255, 255, 255, 0.15);
-	-webkit-backdrop-filter: blur(10px);
-	        backdrop-filter: blur(10px);
-	border-radius: 25rpx;
-	padding: 40rpx;
-}
-.search-header {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	margin-bottom: 30rpx;
-}
-.search-emoji {
-	font-size: 40rpx;
-	margin-right: 15rpx;
-}
-.search-title {
-	font-size: 32rpx;
-	font-weight: bold;
-	color: white;
-}
 .search-row {
 	display: flex;
 	gap: 20rpx;
@@ -142,12 +120,15 @@
 }
 .search-input {
 	width: 100%;
-	padding: 20rpx 25rpx;
+	padding: 0 25rpx;
 	border-radius: 50rpx;
 	background: rgba(255, 255, 255, 0.9);
 	border: none;
-	font-size: 26rpx;
+	font-size: 28rpx;
 	box-sizing: border-box;
+	height: 68rpx;
+	line-height: 68rpx;
+	text-align: left;
 }
 .clear-btn {
 	position: absolute;
@@ -166,13 +147,13 @@
 	color: #666;
 }
 .search-btn {
-	width: 80rpx;
-	height: 60rpx;
-	border-radius: 30rpx;
+	width: 68rpx;
+	height: 68rpx;
+	border-radius: 34rpx;
 	background: linear-gradient(45deg, #10b981, #059669);
 	color: white;
 	border: none;
-	font-size: 24rpx;
+	font-size: 26rpx;
 	font-weight: bold;
 	display: flex;
 	align-items: center;
@@ -180,11 +161,6 @@
 }
 .search-btn[disabled] {
 	opacity: 0.5;
-}
-.search-tip {
-	text-align: center;
-	font-size: 22rpx;
-	color: rgba(255, 255, 255, 0.8);
 }
 .radar-section {
 	padding: 0 30rpx 40rpx;
@@ -200,9 +176,22 @@
 	align-items: center;
 }
 .radar-canvas {
-	width: 300rpx;
-	height: 300rpx;
+	width: 300rpx !important;
+	height: 300rpx !important;
 	margin-bottom: 30rpx;
+	background-color: rgba(255, 255, 255, 0.9);
+	border-radius: 15rpx;
+	border: 2rpx solid rgba(99, 102, 241, 0.2);
+	display: block;
+	box-sizing: border-box;
+	cursor: pointer;
+	touch-action: none; /* Prevent scrolling while dragging */
+}
+.debug-info {
+	font-size: 24rpx;
+	color: #666;
+	text-align: center;
+	margin-bottom: 10rpx;
 }
 .radar-legend {
 	display: flex;
@@ -223,47 +212,6 @@
 .legend-label {
 	font-size: 22rpx;
 	color: white;
-}
-.preferences-section {
-	padding: 0 30rpx 40rpx;
-}
-.preference-controls {
-	background: rgba(255, 255, 255, 0.15);
-	-webkit-backdrop-filter: blur(10px);
-	        backdrop-filter: blur(10px);
-	border-radius: 25rpx;
-	padding: 40rpx;
-}
-.preference-item {
-	margin-bottom: 25rpx;
-}
-.preference-item:last-child {
-	margin-bottom: 0;
-}
-.preference-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin-bottom: 15rpx;
-}
-.preference-label {
-	font-size: 24rpx;
-	color: white;
-	font-weight: bold;
-}
-.preference-value {
-	font-size: 24rpx;
-	color: #fbbf24;
-	font-weight: bold;
-	background: rgba(251, 191, 36, 0.2);
-	padding: 3rpx 12rpx;
-	border-radius: 12rpx;
-}
-.compact-slider {
-	-webkit-transform: scale(0.8);
-	        transform: scale(0.8);
-	-webkit-transform-origin: left center;
-	        transform-origin: left center;
 }
 .recommendations-section {
 	padding: 0 30rpx 60rpx;
@@ -328,17 +276,16 @@
 	font-size: 24rpx;
 	color: rgba(255, 255, 255, 0.8);
 }
-.dish-tags {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 15rpx;
+.dish-cid {
+	margin-top: 15rpx;
+	padding-top: 10rpx;
+	border-top: 1rpx solid rgba(255, 255, 255, 0.2);
 }
-.dish-tag {
-	padding: 8rpx 16rpx;
-	background: rgba(255, 255, 255, 0.2);
-	border-radius: 15rpx;
+.cid-label {
 	font-size: 22rpx;
-	color: white;
+	color: rgba(255, 255, 255, 0.7);
+	font-family: 'Courier New', monospace;
+	font-weight: normal;
 }
 .test-api-btn {
 	position: absolute;

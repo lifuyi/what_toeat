@@ -9558,550 +9558,6 @@ internalMixin(Vue);
 
 /***/ }),
 /* 26 */
-/*!******************************************************************************************!*\
-  !*** ./node_modules/@dcloudio/vue-cli-plugin-uni/packages/uni-console/dist/index.esm.js ***!
-  \******************************************************************************************/
-/*! exports provided: initRuntimeSocketService */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* WEBPACK VAR INJECTION */(function(uni) {/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "initRuntimeSocketService", function() { return initRuntimeSocketService; });
-const CONSOLE_TYPES = ['log', 'warn', 'error', 'info', 'debug'];
-let sendConsole = null;
-const messageQueue = [];
-function sendConsoleMessages(messages) {
-    if (sendConsole == null) {
-        messageQueue.push(...messages);
-        return;
-    }
-    sendConsole(JSON.stringify({
-        type: 'console',
-        data: messages,
-    }));
-}
-function setSendConsole(value) {
-    sendConsole = value;
-    if (value != null && messageQueue.length > 0) {
-        const messages = messageQueue.slice();
-        messageQueue.length = 0;
-        sendConsoleMessages(messages);
-    }
-}
-const originalConsole = /*@__PURE__*/ CONSOLE_TYPES.reduce((methods, type) => {
-    methods[type] = console[type].bind(console);
-    return methods;
-}, {});
-const atFileRegex = /^\s*at\s+[\w/./-]+:\d+$/;
-function rewriteConsole() {
-    function wrapConsole(type) {
-        return function (...args) {
-            const originalArgs = [...args];
-            if (originalArgs.length) {
-                const maybeAtFile = originalArgs[originalArgs.length - 1];
-                // 移除最后的 at pages/index/index.uvue:6
-                if (typeof maybeAtFile === 'string' && atFileRegex.test(maybeAtFile)) {
-                    originalArgs.pop();
-                }
-            }
-            if (true) {
-                originalConsole[type](...originalArgs);
-            }
-            sendConsoleMessages([formatMessage(type, args)]);
-        };
-    }
-    // 百度小程序不允许赋值，所以需要判断是否可写
-    if (isConsoleWritable()) {
-        CONSOLE_TYPES.forEach((type) => {
-            console[type] = wrapConsole(type);
-        });
-        return function restoreConsole() {
-            CONSOLE_TYPES.forEach((type) => {
-                console[type] = originalConsole[type];
-            });
-        };
-    }
-    else {
-        // @ts-expect-error
-        const oldLog = uni.__f__;
-        if (oldLog) {
-            // 重写 uni.__f__ 方法，这样的话，仅能打印开发者代码里的日志，其他没有被重写为__f__的日志将无法打印（比如uni-app框架、小程序框架等）
-            // @ts-expect-error
-            uni.__f__ = function (...args) {
-                const [type, filename, ...rest] = args;
-                // 原始日志移除 filename
-                oldLog(type, '', ...rest);
-                sendConsoleMessages([formatMessage(type, [...rest, filename])]);
-            };
-            return function restoreConsole() {
-                // @ts-expect-error
-                uni.__f__ = oldLog;
-            };
-        }
-    }
-    return function restoreConsole() { };
-}
-function isConsoleWritable() {
-    const value = console.log;
-    const sym = Symbol();
-    try {
-        // @ts-expect-error
-        console.log = sym;
-    }
-    catch (ex) {
-        return false;
-    }
-    // @ts-expect-error
-    const isWritable = console.log === sym;
-    console.log = value;
-    return isWritable;
-}
-function formatMessage(type, args) {
-    try {
-        return {
-            type,
-            args: formatArgs(args),
-        };
-    }
-    catch (e) {
-        originalConsole.error(e);
-    }
-    return {
-        type,
-        args: [],
-    };
-}
-function formatArgs(args) {
-    return args.map((arg) => formatArg(arg));
-}
-function formatArg(arg, depth = 0) {
-    if (depth >= 7) {
-        return {
-            type: 'object',
-            value: '[Maximum depth reached]',
-        };
-    }
-    return ARG_FORMATTERS[typeof arg](arg, depth);
-}
-function formatObject(value, depth) {
-    if (value === null) {
-        return {
-            type: 'null',
-        };
-    }
-    if (isComponentPublicInstance(value)) {
-        return formatComponentPublicInstance(value, depth);
-    }
-    if (isComponentInternalInstance(value)) {
-        return formatComponentInternalInstance(value, depth);
-    }
-    if (isUniElement(value)) {
-        return formatUniElement(value, depth);
-    }
-    if (isCSSStyleDeclaration(value)) {
-        return formatCSSStyleDeclaration(value, depth);
-    }
-    if (Array.isArray(value)) {
-        return {
-            type: 'object',
-            subType: 'array',
-            value: {
-                properties: value.map((v, i) => formatArrayElement(v, i, depth + 1)),
-            },
-        };
-    }
-    if (value instanceof Set) {
-        return {
-            type: 'object',
-            subType: 'set',
-            className: 'Set',
-            description: `Set(${value.size})`,
-            value: {
-                entries: Array.from(value).map((v) => formatSetEntry(v, depth + 1)),
-            },
-        };
-    }
-    if (value instanceof Map) {
-        return {
-            type: 'object',
-            subType: 'map',
-            className: 'Map',
-            description: `Map(${value.size})`,
-            value: {
-                entries: Array.from(value.entries()).map((v) => formatMapEntry(v, depth + 1)),
-            },
-        };
-    }
-    if (value instanceof Promise) {
-        return {
-            type: 'object',
-            subType: 'promise',
-            value: {
-                properties: [],
-            },
-        };
-    }
-    if (value instanceof RegExp) {
-        return {
-            type: 'object',
-            subType: 'regexp',
-            value: String(value),
-            className: 'Regexp',
-        };
-    }
-    if (value instanceof Date) {
-        return {
-            type: 'object',
-            subType: 'date',
-            value: String(value),
-            className: 'Date',
-        };
-    }
-    if (value instanceof Error) {
-        return {
-            type: 'object',
-            subType: 'error',
-            value: value.message || String(value),
-            className: value.name || 'Error',
-        };
-    }
-    return {
-        type: 'object',
-        value: {
-            properties: Object.entries(value).map(([name, value]) => formatObjectProperty(name, value, depth + 1)),
-        },
-    };
-}
-function isComponentPublicInstance(value) {
-    return value.$ && isComponentInternalInstance(value.$);
-}
-function isComponentInternalInstance(value) {
-    return value.type && value.uid != null && value.appContext;
-}
-function formatComponentPublicInstance(value, depth) {
-    return {
-        type: 'object',
-        className: 'ComponentPublicInstance',
-        value: {
-            properties: Object.entries(value.$.type).map(([name, value]) => formatObjectProperty(name, value, depth + 1)),
-        },
-    };
-}
-function formatComponentInternalInstance(value, depth) {
-    return {
-        type: 'object',
-        className: 'ComponentInternalInstance',
-        value: {
-            properties: Object.entries(value.type).map(([name, value]) => formatObjectProperty(name, value, depth + 1)),
-        },
-    };
-}
-function isUniElement(value) {
-    return value.style && value.tagName != null && value.nodeName != null;
-}
-function formatUniElement(value, depth) {
-    return {
-        type: 'object',
-        // 非 x 没有 UniElement 的概念
-        // className: 'UniElement',
-        value: {
-            properties: Object.entries(value)
-                .filter(([name]) => [
-                'id',
-                'tagName',
-                'nodeName',
-                'dataset',
-                'offsetTop',
-                'offsetLeft',
-                'style',
-            ].includes(name))
-                .map(([name, value]) => formatObjectProperty(name, value, depth + 1)),
-        },
-    };
-}
-function isCSSStyleDeclaration(value) {
-    return (typeof value.getPropertyValue === 'function' &&
-        typeof value.setProperty === 'function' &&
-        value.$styles);
-}
-function formatCSSStyleDeclaration(style, depth) {
-    return {
-        type: 'object',
-        value: {
-            properties: Object.entries(style.$styles).map(([name, value]) => formatObjectProperty(name, value, depth + 1)),
-        },
-    };
-}
-function formatObjectProperty(name, value, depth) {
-    return Object.assign(formatArg(value, depth), {
-        name,
-    });
-}
-function formatArrayElement(value, index, depth) {
-    return Object.assign(formatArg(value, depth), {
-        name: `${index}`,
-    });
-}
-function formatSetEntry(value, depth) {
-    return {
-        value: formatArg(value, depth),
-    };
-}
-function formatMapEntry(value, depth) {
-    return {
-        key: formatArg(value[0], depth),
-        value: formatArg(value[1], depth),
-    };
-}
-const ARG_FORMATTERS = {
-    function(value) {
-        return {
-            type: 'function',
-            value: `function ${value.name}() {}`,
-        };
-    },
-    undefined() {
-        return {
-            type: 'undefined',
-        };
-    },
-    object(value, depth) {
-        return formatObject(value, depth);
-    },
-    boolean(value) {
-        return {
-            type: 'boolean',
-            value: String(value),
-        };
-    },
-    number(value) {
-        return {
-            type: 'number',
-            value: String(value),
-        };
-    },
-    bigint(value) {
-        return {
-            type: 'bigint',
-            value: String(value),
-        };
-    },
-    string(value) {
-        return {
-            type: 'string',
-            value,
-        };
-    },
-    symbol(value) {
-        return {
-            type: 'symbol',
-            value: value.description,
-        };
-    },
-};
-
-function initRuntimeSocket(hosts, port, id) {
-    if (!hosts || !port || !id)
-        return Promise.resolve(null);
-    return hosts
-        .split(',')
-        .reduce((promise, host) => {
-        return promise.then((socket) => {
-            if (socket)
-                return socket;
-            return tryConnectSocket(host, port, id);
-        });
-    }, Promise.resolve(null));
-}
-const SOCKET_TIMEOUT = 500;
-function tryConnectSocket(host, port, id) {
-    return new Promise((resolve, reject) => {
-        const socket = uni.connectSocket({
-            url: `ws://${host}:${port}/${id}`,
-            // 支付宝小程序 是否开启多实例
-            multiple: true,
-            fail() {
-                resolve(null);
-            },
-        });
-        const timer = setTimeout(() => {
-            if (Object({"NODE_ENV":"development","VUE_APP_DARK_MODE":"false","VUE_APP_NAME":"今天吃什么","VUE_APP_PLATFORM":"mp-weixin","BASE_URL":"/"}).UNI_DEBUG) {
-                originalConsole.log(`uni-app:[${Date.now()}][socket]`, `connect timeout: ${host}`);
-            }
-            socket.close({
-                code: 1006,
-                reason: 'connect timeout',
-            });
-            resolve(null);
-        }, SOCKET_TIMEOUT);
-        socket.onOpen((e) => {
-            if (Object({"NODE_ENV":"development","VUE_APP_DARK_MODE":"false","VUE_APP_NAME":"今天吃什么","VUE_APP_PLATFORM":"mp-weixin","BASE_URL":"/"}).UNI_DEBUG) {
-                originalConsole.log(`uni-app:[${Date.now()}][socket]`, `connect success: ${host}`, e);
-            }
-            clearTimeout(timer);
-            resolve(socket);
-        });
-        socket.onClose((e) => {
-            if (Object({"NODE_ENV":"development","VUE_APP_DARK_MODE":"false","VUE_APP_NAME":"今天吃什么","VUE_APP_PLATFORM":"mp-weixin","BASE_URL":"/"}).UNI_DEBUG) {
-                originalConsole.log(`uni-app:[${Date.now()}][socket]`, `connect close: ${host}`, e);
-            }
-            clearTimeout(timer);
-            resolve(null);
-        });
-        socket.onError((e) => {
-            if (Object({"NODE_ENV":"development","VUE_APP_DARK_MODE":"false","VUE_APP_NAME":"今天吃什么","VUE_APP_PLATFORM":"mp-weixin","BASE_URL":"/"}).UNI_DEBUG) {
-                originalConsole.log(`uni-app:[${Date.now()}][socket]`, `connect error: ${host}`, e);
-            }
-            clearTimeout(timer);
-            resolve(null);
-        });
-    });
-}
-
-let sendError = null;
-// App.onError会监听到两类错误，一类是小程序自身抛出的，一类是 vue 的 errorHandler 触发的
-// uni.onError 和 App.onError 会同时监听到错误(主要是App.onError监听之前的错误)，所以需要用 Set 来去重
-// uni.onError 会在 App.onError 上边同时增加监听，因为要监听 vue 的errorHandler
-// 目前 vue 的 errorHandler 仅会callHook('onError')，所以需要把uni.onError的也挂在 App.onError 上
-const errorQueue = new Set();
-function sendErrorMessages(errors) {
-    if (sendError == null) {
-        errors.forEach((error) => {
-            errorQueue.add(error);
-        });
-        return;
-    }
-    sendError(JSON.stringify({
-        type: 'error',
-        data: errors.map((err) => {
-            const isPromiseRejection = err && 'promise' in err && 'reason' in err;
-            const prefix = isPromiseRejection ? 'UnhandledPromiseRejection: ' : '';
-            if (isPromiseRejection) {
-                err = err.reason;
-            }
-            if (err instanceof Error && err.stack) {
-                return prefix + err.stack;
-            }
-            if (typeof err === 'object' && err !== null) {
-                try {
-                    return prefix + JSON.stringify(err);
-                }
-                catch (err) {
-                    return prefix + String(err);
-                }
-            }
-            return prefix + String(err);
-        }),
-    }));
-}
-function setSendError(value) {
-    sendError = value;
-    if (value != null && errorQueue.size > 0) {
-        const errors = Array.from(errorQueue);
-        errorQueue.clear();
-        sendErrorMessages(errors);
-    }
-}
-function initOnError() {
-    function onError(error) {
-        try {
-            // 小红书小程序 socket.send 时，会报错，onError错误信息为：
-            // Cannot create property 'errMsg' on string 'taskId'
-            // 导致陷入死循环
-            if (typeof PromiseRejectionEvent !== 'undefined' &&
-                error instanceof PromiseRejectionEvent &&
-                error.reason instanceof Error &&
-                error.reason.message &&
-                error.reason.message.includes(`Cannot create property 'errMsg' on string 'taskId`)) {
-                return;
-            }
-            if (true) {
-                originalConsole.error(error);
-            }
-            sendErrorMessages([error]);
-        }
-        catch (err) {
-            originalConsole.error(err);
-        }
-    }
-    if (typeof uni.onError === 'function') {
-        uni.onError(onError);
-    }
-    if (typeof uni.onUnhandledRejection === 'function') {
-        uni.onUnhandledRejection(onError);
-    }
-    return function offError() {
-        if (typeof uni.offError === 'function') {
-            uni.offError(onError);
-        }
-        if (typeof uni.offUnhandledRejection === 'function') {
-            uni.offUnhandledRejection(onError);
-        }
-    };
-}
-
-function initRuntimeSocketService() {
-    const hosts = "127.0.0.1,192.168.3.238";
-    const port = "8090";
-    const id = "mp-weixin_ASbben";
-    if (!hosts || !port || !id)
-        return Promise.resolve(false);
-    // 百度小程序需要延迟初始化，不然会存在循环引用问题vendor.js
-    const lazy = typeof swan !== 'undefined';
-    // 重写需要同步，避免丢失早期日志信息
-    let restoreError = lazy ? () => { } : initOnError();
-    let restoreConsole = lazy ? () => { } : rewriteConsole();
-    // 百度小程序需要异步初始化，不然调用 uni.connectSocket 会循环引入vendor.js
-    return Promise.resolve().then(() => {
-        if (lazy) {
-            restoreError = initOnError();
-            restoreConsole = rewriteConsole();
-        }
-        return initRuntimeSocket(hosts, port, id).then((socket) => {
-            if (!socket) {
-                restoreError();
-                restoreConsole();
-                originalConsole.error(`开发模式下日志通道建立 socket 连接失败。
-如果是小程序平台，请勾选不校验合法域名配置。
-如果是运行到真机，请确认手机与电脑处于同一网络。`);
-                return false;
-            }
-            socket.onClose(() => {
-                if (Object({"NODE_ENV":"development","VUE_APP_DARK_MODE":"false","VUE_APP_NAME":"今天吃什么","VUE_APP_PLATFORM":"mp-weixin","BASE_URL":"/"}).UNI_DEBUG) {
-                    originalConsole.log(`uni-app:[${Date.now()}][socket]`, 'connect close and restore');
-                }
-                originalConsole.error('开发模式下日志通道 socket 连接关闭，请在 HBuilderX 中重新运行。');
-                restoreError();
-                restoreConsole();
-            });
-            setSendConsole((data) => {
-                if (Object({"NODE_ENV":"development","VUE_APP_DARK_MODE":"false","VUE_APP_NAME":"今天吃什么","VUE_APP_PLATFORM":"mp-weixin","BASE_URL":"/"}).UNI_DEBUG) {
-                    originalConsole.log(`uni-app:[${Date.now()}][console]`, data);
-                }
-                socket.send({
-                    data,
-                });
-            });
-            setSendError((data) => {
-                if (Object({"NODE_ENV":"development","VUE_APP_DARK_MODE":"false","VUE_APP_NAME":"今天吃什么","VUE_APP_PLATFORM":"mp-weixin","BASE_URL":"/"}).UNI_DEBUG) {
-                    originalConsole.log(`uni-app:[${Date.now()}][error]`, data);
-                }
-                socket.send({
-                    data,
-                });
-            });
-            return true;
-        });
-    });
-}
-initRuntimeSocketService();
-
-
-
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 2)["default"]))
-
-/***/ }),
-/* 27 */
 /*!******************************************************!*\
   !*** /Users/eyeopen/Downloads/wte/Uniapp/pages.json ***!
   \******************************************************/
@@ -10111,12 +9567,12 @@ initRuntimeSocketService();
 
 
 /***/ }),
+/* 27 */,
 /* 28 */,
 /* 29 */,
 /* 30 */,
 /* 31 */,
-/* 32 */,
-/* 33 */
+/* 32 */
 /*!**********************************************************************************************************!*\
   !*** ./node_modules/@dcloudio/vue-cli-plugin-uni/packages/vue-loader/lib/runtime/componentNormalizer.js ***!
   \**********************************************************************************************************/
@@ -10247,7 +9703,7 @@ function normalizeComponent (
 
 
 /***/ }),
-/* 34 */
+/* 33 */
 /*!********************************************************************!*\
   !*** /Users/eyeopen/Downloads/wte/Uniapp/uni.promisify.adaptor.js ***!
   \********************************************************************/
@@ -10271,13 +9727,13 @@ uni.addInterceptor({
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 2)["default"]))
 
 /***/ }),
+/* 34 */,
 /* 35 */,
 /* 36 */,
 /* 37 */,
 /* 38 */,
 /* 39 */,
-/* 40 */,
-/* 41 */
+/* 40 */
 /*!************************************************************************************************!*\
   !*** ./node_modules/@dcloudio/vue-cli-plugin-uni/packages/@babel/runtime/regenerator/index.js ***!
   \************************************************************************************************/
@@ -10286,11 +9742,11 @@ uni.addInterceptor({
 
 // TODO(Babel 8): Remove this file.
 
-var runtime = __webpack_require__(/*! @babel/runtime/helpers/regeneratorRuntime */ 42)();
+var runtime = __webpack_require__(/*! @babel/runtime/helpers/regeneratorRuntime */ 41)();
 module.exports = runtime;
 
 /***/ }),
-/* 42 */
+/* 41 */
 /*!*******************************************************************!*\
   !*** ./node_modules/@babel/runtime/helpers/regeneratorRuntime.js ***!
   \*******************************************************************/
@@ -10611,7 +10067,7 @@ function _regeneratorRuntime() {
 module.exports = _regeneratorRuntime, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
 /***/ }),
-/* 43 */
+/* 42 */
 /*!*****************************************************************!*\
   !*** ./node_modules/@babel/runtime/helpers/asyncToGenerator.js ***!
   \*****************************************************************/
@@ -10651,7 +10107,7 @@ function _asyncToGenerator(fn) {
 module.exports = _asyncToGenerator, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
 /***/ }),
-/* 44 */
+/* 43 */
 /*!********************************************************!*\
   !*** /Users/eyeopen/Downloads/wte/Uniapp/utils/api.js ***!
   \********************************************************/
@@ -10677,7 +10133,7 @@ exports.searchRecipesByIngredients = searchRecipesByIngredients;
 var _slicedToArray2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/slicedToArray */ 5));
 var _toConsumableArray2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/toConsumableArray */ 18));
 var _defineProperty2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/defineProperty */ 11));
-var _config = __webpack_require__(/*! ./config.js */ 45);
+var _config = __webpack_require__(/*! ./config.js */ 44);
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { (0, _defineProperty2.default)(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 var BASE_URL = (0, _config.getBaseUrl)(); // 动态获取API基础URL
@@ -10693,11 +10149,11 @@ function request(url) {
 
     // 小程序环境检查HTTPS要求
     if (!isHttps && CURRENT_PLATFORM.startsWith('mp-')) {
-      uni.__f__("warn", "\u8B66\u544A: ".concat(CURRENT_PLATFORM, " \u5E73\u53F0\u8981\u6C42\u4F7F\u7528HTTPS\u534F\u8BAE"), " at utils/api.js:16");
+      console.warn("\u8B66\u544A: ".concat(CURRENT_PLATFORM, " \u5E73\u53F0\u8981\u6C42\u4F7F\u7528HTTPS\u534F\u8BAE"));
       // 在小程序环境下，如果是HTTP，尝试转换为HTTPS
       if (isHttp) {
         var httpsUrl = BASE_URL.replace('http://', 'https://');
-        uni.__f__("log", "\u81EA\u52A8\u8F6C\u6362\u4E3AHTTPS: ".concat(httpsUrl), " at utils/api.js:20");
+        console.log("\u81EA\u52A8\u8F6C\u6362\u4E3AHTTPS: ".concat(httpsUrl));
       }
     }
     var config = {
@@ -10711,7 +10167,7 @@ function request(url) {
       }, options.header),
       timeout: getPlatformTimeout(),
       success: function success(res) {
-        uni.__f__("log", "[".concat(CURRENT_PLATFORM, "] API ").concat(options.method || 'GET', " ").concat(url, ":"), res.statusCode, " at utils/api.js:36");
+        console.log("[".concat(CURRENT_PLATFORM, "] API ").concat(options.method || 'GET', " ").concat(url, ":"), res.statusCode);
         if (res.statusCode === 200) {
           resolve(res.data);
         } else {
@@ -10720,7 +10176,7 @@ function request(url) {
         }
       },
       fail: function fail(err) {
-        uni.__f__("error", "[".concat(CURRENT_PLATFORM, "] Request failed:"), err, " at utils/api.js:45");
+        console.error("[".concat(CURRENT_PLATFORM, "] Request failed:"), err);
         var errorMsg = getPlatformNetworkError(err);
         reject(new Error(errorMsg));
       }
@@ -10732,7 +10188,7 @@ function request(url) {
     } else {
       config.data = options.data || {};
     }
-    uni.__f__("log", "[".concat(CURRENT_PLATFORM, "] API Request: ").concat(config.method, " ").concat(config.url), config.data, " at utils/api.js:58");
+    console.log("[".concat(CURRENT_PLATFORM, "] API Request: ").concat(config.method, " ").concat(config.url), config.data);
     uni.request(config);
   });
 }
@@ -10866,23 +10322,46 @@ function convertRecipeToDish(recipe) {
     return step.trim();
   }) : [];
 
-  // 处理标签
+  // 处理标签 - 支持多种可能的字段名
   var tags = [];
-  if (recipe.fl) tags.push.apply(tags, (0, _toConsumableArray2.default)(recipe.fl.split(/[,，、]/).filter(function (tag) {
-    return tag.trim();
-  })));
+
+  // 尝试从不同的字段获取标签
+  if (recipe.fl) {
+    tags.push.apply(tags, (0, _toConsumableArray2.default)(recipe.fl.split(/[,，、]/).filter(function (tag) {
+      return tag.trim();
+    })));
+  }
+  if (recipe.tags && Array.isArray(recipe.tags)) {
+    tags.push.apply(tags, (0, _toConsumableArray2.default)(recipe.tags));
+  }
+  if (recipe.tags && typeof recipe.tags === 'string') {
+    tags.push.apply(tags, (0, _toConsumableArray2.default)(recipe.tags.split(/[,，、]/).filter(function (tag) {
+      return tag.trim();
+    })));
+  }
+  if (recipe.category) {
+    tags.push(recipe.category);
+  }
+  if (recipe.cid) {
+    tags.push(recipe.cid);
+  }
+
+  // 添加难度和时间作为标签
   if (recipe.difficulty) tags.push(getDifficultyText(recipe.difficulty));
   if (recipe.costtime) tags.push(recipe.costtime);
-  return {
+  console.log('Extracted tags for recipe:', recipe.title, 'tags:', tags, 'cid:', recipe.cid);
+  var convertedDish = {
     id: recipe.id,
-    name: recipe.title || '未知菜品',
-    description: recipe.desc || recipe.tip || '',
+    name: recipe.title || recipe.name || '未知菜品',
+    description: recipe.desc || recipe.description || recipe.tip || '',
     ingredients: ingredients,
     steps: steps,
-    cookingTime: recipe.costtime || '未知',
+    cookingTime: recipe.costtime || recipe.cookingTime || '未知',
     difficulty: getDifficultyText(recipe.difficulty || recipe['制作难易']),
     tags: tags,
-    category: recipe.fl || '家常菜',
+    category: recipe.fl || recipe.category || '家常菜',
+    cid: recipe.cid || recipe.fl || recipe.category || '未分类',
+    // 直接使用数据库的cid字段
     scores: {
       healthy: recipe['健康度'] || recipe.健康度 || 5,
       difficulty: recipe['制作难易'] || recipe.制作难易 || 2,
@@ -10893,8 +10372,12 @@ function convertRecipeToDish(recipe) {
     matchScore: recipe.matchScore || recipe.matchPercentage || 0,
     grade: recipe.grade || 0,
     viewnum: recipe.viewnum || 0,
-    favnum: recipe.favnum || 0
+    favnum: recipe.favnum || 0,
+    // 保留原始数据用于调试
+    _raw: recipe
   };
+  console.log('Converted dish:', convertedDish);
+  return convertedDish;
 }
 
 // 难度等级转换
@@ -10935,7 +10418,7 @@ function calculateMatchScore(dish, preferences) {
 
 // 错误处理
 function handleApiError(error) {
-  uni.__f__("error", 'API Error:', error, " at utils/api.js:257");
+  console.error('API Error:', error);
   var message = '请求失败';
   if (error.message) {
     if (error.message.includes('网络')) {
@@ -10969,7 +10452,7 @@ exports.default = _default;
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 2)["default"]))
 
 /***/ }),
-/* 45 */
+/* 44 */
 /*!***********************************************************!*\
   !*** /Users/eyeopen/Downloads/wte/Uniapp/utils/config.js ***!
   \***********************************************************/
@@ -11141,6 +10624,7 @@ var _default = CONFIG;
 exports.default = _default;
 
 /***/ }),
+/* 45 */,
 /* 46 */,
 /* 47 */,
 /* 48 */,
@@ -11156,8 +10640,7 @@ exports.default = _default;
 /* 58 */,
 /* 59 */,
 /* 60 */,
-/* 61 */,
-/* 62 */
+/* 61 */
 /*!*************************************************************!*\
   !*** /Users/eyeopen/Downloads/wte/Uniapp/utils/platform.js ***!
   \*************************************************************/
@@ -11172,11 +10655,11 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.storage = exports.network = exports.navigation = exports.feedback = exports.features = exports.device = exports.default = void 0;
-var _regenerator = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/regenerator */ 41));
-var _asyncToGenerator2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/asyncToGenerator */ 43));
+var _regenerator = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/regenerator */ 40));
+var _asyncToGenerator2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/asyncToGenerator */ 42));
 var _defineProperty2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/defineProperty */ 11));
 var _slicedToArray2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/slicedToArray */ 5));
-var _config = __webpack_require__(/*! ./config.js */ 45);
+var _config = __webpack_require__(/*! ./config.js */ 44);
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { (0, _defineProperty2.default)(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 // 平台适配的存储操作
@@ -11188,7 +10671,7 @@ var storage = {
       uni.setStorageSync(key, data);
       return true;
     } catch (error) {
-      uni.__f__("error", 'Storage set error:', error, " at utils/platform.js:13");
+      console.error('Storage set error:', error);
       return false;
     }
   },
@@ -11206,7 +10689,7 @@ var storage = {
         return data;
       }
     } catch (error) {
-      uni.__f__("error", 'Storage get error:', error, " at utils/platform.js:31");
+      console.error('Storage get error:', error);
       return defaultValue;
     }
   },
@@ -11216,7 +10699,7 @@ var storage = {
       uni.removeStorageSync(key);
       return true;
     } catch (error) {
-      uni.__f__("error", 'Storage remove error:', error, " at utils/platform.js:42");
+      console.error('Storage remove error:', error);
       return false;
     }
   },
@@ -11226,7 +10709,7 @@ var storage = {
       uni.clearStorageSync();
       return true;
     } catch (error) {
-      uni.__f__("error", 'Storage clear error:', error, " at utils/platform.js:53");
+      console.error('Storage clear error:', error);
       return false;
     }
   }
@@ -11257,7 +10740,7 @@ var navigation = {
       case 'mp-weixin':
         // 微信小程序路径长度限制
         if (fullUrl.length > 1000) {
-          uni.__f__("warn", '微信小程序URL过长，可能导致跳转失败', " at utils/platform.js:79");
+          console.warn('微信小程序URL过长，可能导致跳转失败');
         }
         break;
       case 'h5':

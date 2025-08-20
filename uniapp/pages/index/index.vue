@@ -44,27 +44,20 @@
 
 		<!-- Ingredient search section -->
 		<view class="search-section">
-			<view class="search-card">
-				<view class="search-header">
-					<text class="search-emoji">🥬</text>
-					<text class="search-title">食材搜索</text>
+			<view class="search-row">
+				<view class="search-input-wrapper">
+					<input 
+						class="search-input" 
+						placeholder="输入您有的食材..."
+						v-model="searchTerm"
+						@confirm="handleSearch"
+					/>
+					<view v-if="searchTerm" class="clear-btn" @tap="clearSearch">✕</view>
 				</view>
-				<view class="search-row">
-					<view class="search-input-wrapper">
-						<input 
-							class="search-input" 
-							placeholder="输入您有的食材..."
-							v-model="searchTerm"
-							@confirm="handleSearch"
-						/>
-						<view v-if="searchTerm" class="clear-btn" @tap="clearSearch">✕</view>
-					</view>
-					<button class="search-btn" @tap="handleSearch" :disabled="!searchTerm.trim()">
-						<text v-if="isSearching">🔍</text>
-						<text v-else>🔍</text>
-					</button>
-				</view>
-				<text class="search-tip">💡 输入您现有的食材，我们为您推荐相关菜品</text>
+				<button class="search-btn" @tap="handleSearch" :disabled="!searchTerm.trim()">
+					<text v-if="isSearching">🔍</text>
+					<text v-else>🔍</text>
+				</button>
 			</view>
 		</view>
 
@@ -73,10 +66,15 @@
 			<text class="section-title">📊 口味雷达图</text>
 			<view class="radar-container">
 				<canvas 
-					canvas-id="radarChart" 
+					type="2d"
+					id="radarChart"
 					class="radar-canvas"
+					:style="{ width: '300rpx', height: '300rpx' }"
 					@touchstart="onRadarTouch"
+					@touchmove="onRadarTouchMove"
+					@touchend="onRadarTouchEnd"
 				></canvas>
+				<text class="debug-info">🎯 拖拽雷达图上的点来调整偏好值 (已移除滑块控制)</text>
 				<view class="radar-legend">
 					<view v-for="(pref, key) in preferences" :key="key" class="legend-item">
 						<view class="legend-color" :style="{ backgroundColor: getRadarColor(key) }"></view>
@@ -86,28 +84,6 @@
 			</view>
 		</view>
 
-		<!-- Preferences control section -->
-		<view class="preferences-section">
-			<text class="section-title">🎛️ 口味偏好调节</text>
-			<view class="preference-controls">
-				<view v-for="(pref, key) in preferences" :key="key" class="preference-item">
-					<view class="preference-header">
-						<text class="preference-label">{{ getPreferenceLabel(key) }}</text>
-						<text class="preference-value">{{ pref }}</text>
-					</view>
-					<slider 
-						:value="pref" 
-						:min="1" 
-						:max="10" 
-						:step="1"
-						activeColor="#6366f1"
-						backgroundColor="#e2e8f0"
-						@change="updatePreference(key, $event)"
-						class="compact-slider"
-					/>
-				</view>
-			</view>
-		</view>
 
 		<!-- Recommended dishes section -->
 		<view class="recommendations-section">
@@ -122,19 +98,26 @@
 					class="dish-card"
 					@tap="viewDishDetail(dish)"
 				>
+					<!-- Line 1: Title with match score -->
 					<view class="dish-header">
 						<text class="dish-name">{{ dish.name }}</text>
 						<view v-if="dish.matchScore" class="match-score">
 							<text class="score-text">{{ Math.round(dish.matchScore) }}%匹配</text>
 						</view>
 					</view>
+					
+					<!-- Line 2: Description -->
 					<text class="dish-description">{{ dish.description }}</text>
+					
+					<!-- Line 3: Time and Difficulty -->
 					<view class="dish-meta">
 						<text class="meta-item">⏱️ {{ dish.cookingTime }}</text>
 						<text class="meta-item">📊 {{ dish.difficulty }}</text>
 					</view>
-					<view class="dish-tags">
-						<text v-for="tag in dish.tags.slice(0, 3)" :key="tag" class="dish-tag">{{ tag }}</text>
+					
+					<!-- Line 4: CID from database -->
+					<view class="dish-cid">
+						<text class="cid-label">{{ dish.cid || dish.category || '未分类' }}</text>
 					</view>
 				</view>
 			</view>
@@ -158,7 +141,10 @@ export default {
 			preferences: { ...CONFIG.DEFAULT_PREFERENCES },
 			presets: CONFIG.PRESETS,
 			recommendedDishes: [],
-			showTestButton: true // 开发环境显示测试按钮
+			showTestButton: true, // 开发环境显示测试按钮
+			isDragging: false,
+			draggedPoint: null,
+			debounceTimer: null
 		}
 	},
 	onLoad() {
@@ -166,6 +152,8 @@ export default {
 		this.fetchRecommendations();
 	},
 	onReady() {
+		console.log('Page ready, drawing radar chart...');
+		console.log('Preferences:', this.preferences);
 		this.drawRadarChart();
 	},
 	methods: {
@@ -240,14 +228,6 @@ export default {
 			uni.removeStorageSync(CONFIG.STORAGE_KEYS.INGREDIENT_SEARCH);
 			this.fetchRecommendations();
 		},
-		updatePreference(key, event) {
-			this.preferences[key] = event.detail.value;
-			this.drawRadarChart(); // Redraw radar chart
-			clearTimeout(this.debounceTimer);
-			this.debounceTimer = setTimeout(() => {
-				this.fetchRecommendations();
-			}, 500);
-		},
 		getPreferenceLabel(key) {
 			const labels = {
 				healthy: '🥗 健康度',
@@ -276,11 +256,15 @@ export default {
 				}
 				
 				// 转换数据格式并计算匹配分数
+				console.log('Raw API recipes:', recipes);
 				this.recommendedDishes = recipes.map(recipe => {
+					console.log('Converting recipe:', recipe);
 					const dish = api.convertRecipeToDish(recipe);
+					console.log('Converted dish:', dish);
 					dish.matchScore = api.calculateMatchScore(dish, this.preferences);
 					return dish;
 				});
+				console.log('Final recommended dishes:', this.recommendedDishes);
 				
 				// 按匹配分数排序
 				this.recommendedDishes.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
@@ -289,8 +273,13 @@ export default {
 				console.error('获取推荐失败:', error);
 				api.handleApiError(error);
 				
-				// 失败时使用备用数据
-				this.recommendedDishes = this.getFallbackDishes();
+				// 显示错误信息，不使用备用数据，这样可以看到真实的API问题
+				uni.showToast({
+					title: 'API连接失败，请检查网络',
+					icon: 'error',
+					duration: 3000
+				});
+				this.recommendedDishes = [];
 			} finally {
 				this.loading = false;
 			}
@@ -300,11 +289,12 @@ export default {
 			const fallbackDishes = [
 				{
 					id: 'fallback_1',
+					cid: 'CID001234',
 					name: '番茄鸡蛋面',
-					description: '经典家常面条，酸甜可口，营养丰富',
+					description: '经典家常面条，酸甜可口，营养丰富，老少皆宜的传统美食',
 					cookingTime: '15分钟',
 					difficulty: '简单',
-					tags: ['家常菜', '快手菜', '营养'],
+					tags: ['小吃', '家常菜', '快手菜', '营养', '面食'],
 					matchScore: 85,
 					ingredients: ['番茄', '鸡蛋', '面条', '葱'],
 					steps: ['准备食材', '炒制番茄鸡蛋', '煮面条', '调味装盘'],
@@ -313,16 +303,31 @@ export default {
 				},
 				{
 					id: 'fallback_2',
+					cid: 'CID005678',
 					name: '蒜蓉西兰花',
-					description: '简单素菜，清爽健康，富含维生素',
+					description: '简单素菜，清爽健康，富含维生素C和膳食纤维，口感脆嫩',
 					cookingTime: '10分钟',
 					difficulty: '简单',
-					tags: ['素食', '健康', '快手菜'],
+					tags: ['素食', '健康', '快手菜', '蔬菜', '清淡'],
 					matchScore: 88,
 					ingredients: ['西兰花', '大蒜', '生抽', '盐'],
 					steps: ['处理西兰花', '爆炒蒜蓉', '下西兰花炒制', '调味出锅'],
 					category: '素食',
 					scores: { healthy: 9, difficulty: 1, vegetarian: 10, spicy: 1, sweetness: 2 }
+				},
+				{
+					id: 'fallback_3',
+					cid: 'CID009876',
+					name: '宫保鸡丁',
+					description: '四川经典菜品，鸡肉嫩滑，花生香脆，酸甜微辣，下饭神器',
+					cookingTime: '25分钟',
+					difficulty: '中等',
+					tags: ['川菜', '下饭菜', '经典', '辣味', '荤菜'],
+					matchScore: 92,
+					ingredients: ['鸡胸肉', '花生米', '干辣椒', '花椒'],
+					steps: ['腌制鸡肉', '炸花生米', '爆炒调味', '装盘上桌'],
+					category: '川菜',
+					scores: { healthy: 6, difficulty: 2, vegetarian: 2, spicy: 8, sweetness: 5 }
 				}
 			];
 			
@@ -357,20 +362,193 @@ export default {
 			return colors[key] || '#6366f1';
 		},
 		drawRadarChart() {
+			// Add a small delay to ensure canvas is ready
+			this.$nextTick(() => {
+				setTimeout(() => {
+					this.renderRadarChart();
+				}, 200); // Increased delay
+			});
+		},
+		
+		async renderRadarChart() {
+			console.log('Starting Canvas 2D radar chart render...');
+			
+			try {
+				// Use Canvas 2D API (modern approach)
+				const query = uni.createSelectorQuery().in(this);
+				const canvas = await new Promise((resolve) => {
+					query.select('#radarChart').fields({ node: true, size: true }).exec((res) => {
+						resolve(res[0]);
+					});
+				});
+				
+				if (!canvas || !canvas.node) {
+					console.error('Failed to get canvas node');
+					return;
+				}
+				
+				const ctx = canvas.node.getContext('2d');
+				const dpr = uni.getSystemInfoSync().pixelRatio;
+				
+				// Set canvas size
+				canvas.node.width = canvas.width * dpr;
+				canvas.node.height = canvas.height * dpr;
+				ctx.scale(dpr, dpr);
+				
+				console.log('Canvas 2D context created successfully', { width: canvas.width, height: canvas.height, dpr });
+				
+				// Use proper dimensions
+				const canvasWidth = canvas.width;
+				const canvasHeight = canvas.height;
+				const centerX = canvasWidth / 2;
+				const centerY = canvasHeight / 2;
+				const radius = Math.min(canvasWidth, canvasHeight) * 0.25; // 25% of canvas size
+				const sides = Object.keys(this.preferences).length;
+				
+				// Clear canvas with white background
+				ctx.fillStyle = '#ffffff';
+				ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+				
+				// Draw background grid
+				ctx.strokeStyle = 'rgba(99, 102, 241, 0.2)';
+				ctx.lineWidth = 1;
+				
+				// Draw concentric circles
+				for (let i = 1; i <= 5; i++) {
+					ctx.beginPath();
+					ctx.arc(centerX, centerY, (radius * i) / 5, 0, 2 * Math.PI);
+					ctx.stroke();
+				}
+				
+				// Draw axis lines and labels
+				const angleStep = (2 * Math.PI) / sides;
+				const labels = Object.keys(this.preferences);
+				const labelNames = {
+					healthy: '健康',
+					difficulty: '难度',
+					vegetarian: '素食',
+					spicy: '辣味',
+					sweetness: '甜味'
+				};
+				
+				ctx.strokeStyle = 'rgba(99, 102, 241, 0.3)';
+				ctx.fillStyle = '#666666';
+				ctx.font = '12px Arial';
+				ctx.textAlign = 'center';
+				ctx.textBaseline = 'middle';
+				
+				for (let i = 0; i < sides; i++) {
+					const angle = i * angleStep - Math.PI / 2;
+					const x = centerX + Math.cos(angle) * radius;
+					const y = centerY + Math.sin(angle) * radius;
+					
+					// Draw axis line
+					ctx.beginPath();
+					ctx.moveTo(centerX, centerY);
+					ctx.lineTo(x, y);
+					ctx.stroke();
+					
+					// Draw label
+					const labelX = centerX + Math.cos(angle) * (radius + 20);
+					const labelY = centerY + Math.sin(angle) * (radius + 20);
+					ctx.fillText(labelNames[labels[i]] || labels[i], labelX, labelY);
+				}
+				
+				// Draw data polygon
+				ctx.strokeStyle = '#6366f1';
+				ctx.fillStyle = 'rgba(99, 102, 241, 0.3)';
+				ctx.lineWidth = 2;
+				ctx.beginPath();
+				
+				for (let i = 0; i < sides; i++) {
+					const angle = i * angleStep - Math.PI / 2;
+					const value = this.preferences[labels[i]] || 1;
+					const distance = (radius * Math.max(1, Math.min(10, value))) / 10;
+					const x = centerX + Math.cos(angle) * distance;
+					const y = centerY + Math.sin(angle) * distance;
+					
+					if (i === 0) {
+						ctx.moveTo(x, y);
+					} else {
+						ctx.lineTo(x, y);
+					}
+				}
+				
+				ctx.closePath();
+				ctx.fill();
+				ctx.stroke();
+				
+				// Draw data points with enhanced interactivity
+				for (let i = 0; i < sides; i++) {
+					const angle = i * angleStep - Math.PI / 2;
+					const value = this.preferences[labels[i]] || 1;
+					const distance = (radius * Math.max(1, Math.min(10, value))) / 10;
+					const x = centerX + Math.cos(angle) * distance;
+					const y = centerY + Math.sin(angle) * distance;
+					
+					// Draw outer ring for better touch target
+					ctx.fillStyle = 'rgba(99, 102, 241, 0.2)';
+					ctx.beginPath();
+					ctx.arc(x, y, 8, 0, 2 * Math.PI);
+					ctx.fill();
+					
+					// Draw main point
+					ctx.fillStyle = '#6366f1';
+					ctx.beginPath();
+					ctx.arc(x, y, 5, 0, 2 * Math.PI);
+					ctx.fill();
+					
+					// Draw white center for contrast
+					ctx.fillStyle = '#ffffff';
+					ctx.beginPath();
+					ctx.arc(x, y, 2, 0, 2 * Math.PI);
+					ctx.fill();
+					
+					// Draw value text with background
+					ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+					ctx.fillRect(x - 8, y - 18, 16, 12);
+					ctx.strokeStyle = '#6366f1';
+					ctx.lineWidth = 1;
+					ctx.strokeRect(x - 8, y - 18, 16, 12);
+					
+					ctx.fillStyle = '#333333';
+					ctx.font = 'bold 10px Arial';
+					ctx.textAlign = 'center';
+					ctx.fillText(value.toString(), x, y - 10);
+				}
+				
+				console.log('Canvas 2D radar chart completed successfully');
+				
+			} catch (error) {
+				console.error('Canvas 2D rendering failed:', error);
+				// Fallback to old method if Canvas 2D is not supported
+				this.renderRadarChartFallback();
+			}
+		},
+		
+		renderRadarChartFallback() {
+			console.log('Using fallback canvas rendering...');
 			const ctx = uni.createCanvasContext('radarChart', this);
+			if (!ctx) {
+				console.error('Failed to create fallback canvas context');
+				return;
+			}
+			
+			// Use conservative dimensions for fallback
+			const canvasSize = 300;
 			const centerX = 150;
 			const centerY = 150;
-			const radius = 100;
+			const radius = 60;
 			const sides = Object.keys(this.preferences).length;
 			
 			// Clear canvas
-			ctx.clearRect(0, 0, 300, 300);
+			ctx.setFillStyle('#ffffff');
+			ctx.fillRect(0, 0, canvasSize, canvasSize);
 			
 			// Draw background grid
-			ctx.setStrokeStyle('rgba(255, 255, 255, 0.25)');
+			ctx.setStrokeStyle('rgba(99, 102, 241, 0.2)');
 			ctx.setLineWidth(1);
 			
-			// Draw concentric circles
 			for (let i = 1; i <= 5; i++) {
 				ctx.beginPath();
 				ctx.arc(centerX, centerY, (radius * i) / 5, 0, 2 * Math.PI);
@@ -381,6 +559,7 @@ export default {
 			const angleStep = (2 * Math.PI) / sides;
 			const labels = Object.keys(this.preferences);
 			
+			ctx.setStrokeStyle('rgba(99, 102, 241, 0.3)');
 			for (let i = 0; i < sides; i++) {
 				const angle = i * angleStep - Math.PI / 2;
 				const x = centerX + Math.cos(angle) * radius;
@@ -394,14 +573,14 @@ export default {
 			
 			// Draw data polygon
 			ctx.setStrokeStyle('#6366f1');
-			ctx.setFillStyle('rgba(99, 102, 241, 0.25)');
+			ctx.setFillStyle('rgba(99, 102, 241, 0.3)');
 			ctx.setLineWidth(2);
 			ctx.beginPath();
 			
 			for (let i = 0; i < sides; i++) {
 				const angle = i * angleStep - Math.PI / 2;
-				const value = this.preferences[labels[i]];
-				const distance = (radius * value) / 10;
+				const value = this.preferences[labels[i]] || 1;
+				const distance = (radius * Math.max(1, Math.min(10, value))) / 10;
 				const x = centerX + Math.cos(angle) * distance;
 				const y = centerY + Math.sin(angle) * distance;
 				
@@ -420,8 +599,8 @@ export default {
 			ctx.setFillStyle('#6366f1');
 			for (let i = 0; i < sides; i++) {
 				const angle = i * angleStep - Math.PI / 2;
-				const value = this.preferences[labels[i]];
-				const distance = (radius * value) / 10;
+				const value = this.preferences[labels[i]] || 1;
+				const distance = (radius * Math.max(1, Math.min(10, value))) / 10;
 				const x = centerX + Math.cos(angle) * distance;
 				const y = centerY + Math.sin(angle) * distance;
 				
@@ -430,11 +609,110 @@ export default {
 				ctx.fill();
 			}
 			
-			ctx.draw();
+			ctx.draw(true);
+			console.log('Fallback radar chart completed');
 		},
+		
 		onRadarTouch(e) {
-			// Handle radar chart touch interactions if needed
-			console.log('Radar chart touched', e);
+			this.handleRadarInteraction(e);
+		},
+		
+		onRadarTouchMove(e) {
+			this.handleRadarInteraction(e);
+		},
+		
+		onRadarTouchEnd(e) {
+			this.isDragging = false;
+			this.draggedPoint = null;
+		},
+		
+		handleRadarInteraction(e) {
+			if (!e.touches || e.touches.length === 0) return;
+			
+			const touch = e.touches[0];
+			
+			// Get canvas position and size
+			uni.createSelectorQuery().in(this).select('#radarChart').boundingClientRect((rect) => {
+				if (!rect) return;
+				
+				// Calculate relative position within canvas
+				const relativeX = touch.clientX - rect.left;
+				const relativeY = touch.clientY - rect.top;
+				
+				// Convert to canvas coordinates (accounting for rpx to px conversion)
+				const canvasX = (relativeX / rect.width) * 300;
+				const canvasY = (relativeY / rect.height) * 300;
+				
+				this.updatePreferenceFromTouch(canvasX, canvasY);
+			}).exec();
+		},
+		
+		updatePreferenceFromTouch(canvasX, canvasY) {
+			const centerX = 150;
+			const centerY = 150;
+			const maxRadius = 75; // Maximum radius for preferences
+			
+			// Calculate distance from center
+			const deltaX = canvasX - centerX;
+			const deltaY = canvasY - centerY;
+			const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+			
+			// Calculate angle
+			let angle = Math.atan2(deltaY, deltaX) + Math.PI / 2;
+			if (angle < 0) angle += 2 * Math.PI;
+			
+			// Determine which preference dimension this corresponds to
+			const sides = Object.keys(this.preferences).length;
+			const angleStep = (2 * Math.PI) / sides;
+			const labels = Object.keys(this.preferences);
+			
+			// Find the closest preference dimension
+			let closestIndex = 0;
+			let minAngleDiff = Math.PI;
+			
+			for (let i = 0; i < sides; i++) {
+				const preferenceAngle = i * angleStep;
+				let angleDiff = Math.abs(angle - preferenceAngle);
+				if (angleDiff > Math.PI) angleDiff = 2 * Math.PI - angleDiff;
+				
+				if (angleDiff < minAngleDiff) {
+					minAngleDiff = angleDiff;
+					closestIndex = i;
+				}
+			}
+			
+			// Only update if touch is close enough to a preference axis (within 30 degrees)
+			if (minAngleDiff < Math.PI / 6) {
+				const preferenceKey = labels[closestIndex];
+				
+				// Calculate new value based on distance from center
+				const clampedDistance = Math.min(distance, maxRadius);
+				const newValue = Math.max(1, Math.min(10, Math.round((clampedDistance / maxRadius) * 10)));
+				
+				// Update preference if it changed
+				if (this.preferences[preferenceKey] !== newValue) {
+					this.preferences[preferenceKey] = newValue;
+					this.drawRadarChart();
+					
+					// Debounced API call
+					clearTimeout(this.debounceTimer);
+					this.debounceTimer = setTimeout(() => {
+						this.fetchRecommendations();
+					}, 500);
+					
+					// Show feedback
+					uni.showToast({
+						title: `${this.getPreferenceLabel(preferenceKey).split(' ')[1]}: ${newValue}`,
+						icon: 'none',
+						duration: 1000
+					});
+				}
+			}
+		},
+		
+		getFirstThreeTags(tags) {
+			if (!tags || !Array.isArray(tags)) return '';
+			return tags.slice(0, 3).join('\r\n');
 		}
 	}
 }
@@ -472,7 +750,7 @@ export default {
 }
 
 .greeting-text {
-	font-size: 48rpx;
+	font-size: 36rpx;
 	font-weight: bold;
 	color: white;
 	text-shadow: 0 2rpx 4rpx rgba(0,0,0,0.3);
@@ -569,30 +847,6 @@ export default {
 	padding: 0 30rpx 40rpx;
 }
 
-.search-card {
-	background: rgba(255, 255, 255, 0.15);
-	backdrop-filter: blur(10px);
-	border-radius: 25rpx;
-	padding: 40rpx;
-}
-
-.search-header {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	margin-bottom: 30rpx;
-}
-
-.search-emoji {
-	font-size: 40rpx;
-	margin-right: 15rpx;
-}
-
-.search-title {
-	font-size: 32rpx;
-	font-weight: bold;
-	color: white;
-}
 
 .search-row {
 	display: flex;
@@ -608,12 +862,15 @@ export default {
 
 .search-input {
 	width: 100%;
-	padding: 20rpx 25rpx;
+	padding: 0 25rpx;
 	border-radius: 50rpx;
 	background: rgba(255, 255, 255, 0.9);
 	border: none;
-	font-size: 26rpx;
+	font-size: 28rpx;
 	box-sizing: border-box;
+	height: 68rpx;
+	line-height: 68rpx;
+	text-align: left;
 }
 
 .clear-btn {
@@ -633,13 +890,13 @@ export default {
 }
 
 .search-btn {
-	width: 80rpx;
-	height: 60rpx;
-	border-radius: 30rpx;
+	width: 68rpx;
+	height: 68rpx;
+	border-radius: 34rpx;
 	background: linear-gradient(45deg, #10b981, #059669);
 	color: white;
 	border: none;
-	font-size: 24rpx;
+	font-size: 26rpx;
 	font-weight: bold;
 	display: flex;
 	align-items: center;
@@ -650,11 +907,6 @@ export default {
 	opacity: 0.5;
 }
 
-.search-tip {
-	text-align: center;
-	font-size: 22rpx;
-	color: rgba(255, 255, 255, 0.8);
-}
 
 .radar-section {
 	padding: 0 30rpx 40rpx;
@@ -671,9 +923,23 @@ export default {
 }
 
 .radar-canvas {
-	width: 300rpx;
-	height: 300rpx;
+	width: 300rpx !important;
+	height: 300rpx !important;
 	margin-bottom: 30rpx;
+	background-color: rgba(255, 255, 255, 0.9);
+	border-radius: 15rpx;
+	border: 2rpx solid rgba(99, 102, 241, 0.2);
+	display: block;
+	box-sizing: border-box;
+	cursor: pointer;
+	touch-action: none; /* Prevent scrolling while dragging */
+}
+
+.debug-info {
+	font-size: 24rpx;
+	color: #666;
+	text-align: center;
+	margin-bottom: 10rpx;
 }
 
 .radar-legend {
@@ -700,51 +966,6 @@ export default {
 	color: white;
 }
 
-.preferences-section {
-	padding: 0 30rpx 40rpx;
-}
-
-.preference-controls {
-	background: rgba(255, 255, 255, 0.15);
-	backdrop-filter: blur(10px);
-	border-radius: 25rpx;
-	padding: 40rpx;
-}
-
-.preference-item {
-	margin-bottom: 25rpx;
-}
-
-.preference-item:last-child {
-	margin-bottom: 0;
-}
-
-.preference-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin-bottom: 15rpx;
-}
-
-.preference-label {
-	font-size: 24rpx;
-	color: white;
-	font-weight: bold;
-}
-
-.preference-value {
-	font-size: 24rpx;
-	color: #fbbf24;
-	font-weight: bold;
-	background: rgba(251, 191, 36, 0.2);
-	padding: 3rpx 12rpx;
-	border-radius: 12rpx;
-}
-
-.compact-slider {
-	transform: scale(0.8);
-	transform-origin: left center;
-}
 
 .recommendations-section {
 	padding: 0 30rpx 60rpx;
@@ -819,18 +1040,17 @@ export default {
 	color: rgba(255, 255, 255, 0.8);
 }
 
-.dish-tags {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 15rpx;
+.dish-cid {
+	margin-top: 15rpx;
+	padding-top: 10rpx;
+	border-top: 1rpx solid rgba(255, 255, 255, 0.2);
 }
 
-.dish-tag {
-	padding: 8rpx 16rpx;
-	background: rgba(255, 255, 255, 0.2);
-	border-radius: 15rpx;
+.cid-label {
 	font-size: 22rpx;
-	color: white;
+	color: rgba(255, 255, 255, 0.7);
+	font-family: 'Courier New', monospace;
+	font-weight: normal;
 }
 
 .test-api-btn {

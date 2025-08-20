@@ -185,22 +185,43 @@ export function convertRecipeToDish(recipe) {
 	// 处理制作步骤
 	const steps = recipe.steptext ? recipe.steptext.split(/\d+[\.、]/).filter(step => step.trim()) : [];
 	
-	// 处理标签
+	// 处理标签 - 支持多种可能的字段名
 	const tags = [];
-	if (recipe.fl) tags.push(...recipe.fl.split(/[,，、]/).filter(tag => tag.trim()));
+	
+	// 尝试从不同的字段获取标签
+	if (recipe.fl) {
+		tags.push(...recipe.fl.split(/[,，、]/).filter(tag => tag.trim()));
+	}
+	if (recipe.tags && Array.isArray(recipe.tags)) {
+		tags.push(...recipe.tags);
+	}
+	if (recipe.tags && typeof recipe.tags === 'string') {
+		tags.push(...recipe.tags.split(/[,，、]/).filter(tag => tag.trim()));
+	}
+	if (recipe.category) {
+		tags.push(recipe.category);
+	}
+	if (recipe.cid) {
+		tags.push(recipe.cid);
+	}
+	
+	// 添加难度和时间作为标签
 	if (recipe.difficulty) tags.push(getDifficultyText(recipe.difficulty));
 	if (recipe.costtime) tags.push(recipe.costtime);
 	
-	return {
+	console.log('Extracted tags for recipe:', recipe.title, 'tags:', tags, 'cid:', recipe.cid);
+	
+	const convertedDish = {
 		id: recipe.id,
-		name: recipe.title || '未知菜品',
-		description: recipe.desc || recipe.tip || '',
+		name: recipe.title || recipe.name || '未知菜品',
+		description: recipe.desc || recipe.description || recipe.tip || '',
 		ingredients: ingredients,
 		steps: steps,
-		cookingTime: recipe.costtime || '未知',
+		cookingTime: recipe.costtime || recipe.cookingTime || '未知',
 		difficulty: getDifficultyText(recipe.difficulty || recipe['制作难易']),
 		tags: tags,
-		category: recipe.fl || '家常菜',
+		category: recipe.fl || recipe.category || '家常菜',
+		cid: recipe.cid || recipe.fl || recipe.category || '未分类', // 直接使用数据库的cid字段
 		scores: {
 			healthy: recipe['健康度'] || recipe.健康度 || 5,
 			difficulty: recipe['制作难易'] || recipe.制作难易 || 2,
@@ -211,8 +232,13 @@ export function convertRecipeToDish(recipe) {
 		matchScore: recipe.matchScore || recipe.matchPercentage || 0,
 		grade: recipe.grade || 0,
 		viewnum: recipe.viewnum || 0,
-		favnum: recipe.favnum || 0
+		favnum: recipe.favnum || 0,
+		// 保留原始数据用于调试
+		_raw: recipe
 	};
+	
+	console.log('Converted dish:', convertedDish);
+	return convertedDish;
 }
 
 // 难度等级转换
