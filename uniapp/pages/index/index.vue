@@ -115,9 +115,9 @@
 						<text class="meta-item">📊 {{ dish.difficulty }}</text>
 					</view>
 					
-					<!-- Line 4: CID from database -->
-					<view class="dish-cid">
-						<text class="cid-label">{{ dish.cid || dish.category || '未分类' }}</text>
+					<!-- Line 4: CID tags from database -->
+					<view class="dish-cid-tags" v-if="dish.cid">
+						<text v-for="(cidTag, index) in splitCidTags(dish.cid)" :key="index" class="cid-tag">{{ cidTag }}</text>
 					</view>
 				</view>
 			</view>
@@ -713,6 +713,12 @@ export default {
 		getFirstThreeTags(tags) {
 			if (!tags || !Array.isArray(tags)) return '';
 			return tags.slice(0, 3).join('\r\n');
+		},
+		
+		// Split CID string by comma and trim whitespace
+		splitCidTags(cidString) {
+			if (!cidString) return [];
+			return cidString.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
 		}
 	}
 }
@@ -1047,11 +1053,28 @@ export default {
 }
 
 .cid-label {
-	font-size: 22rpx;
-	color: rgba(255, 255, 255, 0.7);
-	font-family: 'Courier New', monospace;
-	font-weight: normal;
-}
+		font-size: 22rpx;
+		color: rgba(255, 255, 255, 0.7);
+		font-family: 'Courier New', monospace;
+		font-weight: normal;
+	}
+	
+	.dish-cid-tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 10rpx;
+		margin-top: 15rpx;
+		padding-top: 10rpx;
+		border-top: 1rpx solid rgba(255, 255, 255, 0.2);
+	}
+	
+	.cid-tag {
+		padding: 5rpx 15rpx;
+		background: rgba(99, 102, 241, 0.3);
+		border-radius: 15rpx;
+		font-size: 20rpx;
+		color: white;
+	}
 
 .test-api-btn {
 	position: absolute;

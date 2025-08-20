@@ -37,6 +37,14 @@
 					<text v-for="tag in dish.tags" :key="tag" class="tag">{{ tag }}</text>
 				</view>
 			</view>
+			
+			<!-- CID Tags -->
+			<view class="cid-section" v-if="dish.cid">
+				<text class="section-title">🆔 分类标识</text>
+				<view class="cid-tags">
+					<text v-for="(cidTag, index) in splitCidTags(dish.cid)" :key="index" class="cid-tag">{{ cidTag }}</text>
+				</view>
+			</view>
 
 			<!-- Ingredients -->
 			<view class="ingredients-section">
@@ -154,6 +162,12 @@ export default {
 					icon: 'success'
 				});
 			}
+		},
+		
+		// Split CID string by comma and trim whitespace
+		splitCidTags(cidString) {
+			if (!cidString) return [];
+			return cidString.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
 		}
 	}
 }
@@ -356,22 +370,41 @@ export default {
 }
 
 .action-btn:active {
-	transform: scale(0.98);
-}
+		transform: scale(0.98);
+	}
 
-.primary {
-	background: linear-gradient(45deg, #10b981, #059669);
-	color: white;
-}
+	.primary {
+		background: linear-gradient(45deg, #10b981, #059669);
+		color: white;
+	}
 
-.secondary {
-	background: linear-gradient(45deg, #f59e0b, #d97706);
-	color: white;
-}
+	.secondary {
+		background: linear-gradient(45deg, #f59e0b, #d97706);
+		color: white;
+	}
 
-.btn-text {
-	color: inherit;
-	font-size: inherit;
-	font-weight: inherit;
-}
+	.btn-text {
+		color: inherit;
+		font-size: inherit;
+		font-weight: inherit;
+	}
+	
+	.cid-section {
+		margin-bottom: 40rpx;
+	}
+	
+	.cid-tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 15rpx;
+	}
+	
+	.cid-tag {
+		padding: 10rpx 20rpx;
+		background: rgba(99, 102, 241, 0.3);
+		border-radius: 20rpx;
+		font-size: 24rpx;
+		color: white;
+	}
+</style>
 </style>
