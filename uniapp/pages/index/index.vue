@@ -24,26 +24,9 @@
 			</view>
 		</view>
 
-		<!-- Preset buttons section -->
-		<view class="preset-section">
-			<text class="section-title">🎯 快速预设配置</text>
-			<view class="preset-row">
-				<view 
-					v-for="(preset, index) in presets" 
-					:key="index"
-					class="preset-icon-btn"
-					@tap="selectPreset(preset)"
-				>
-					<text class="preset-emoji">{{ preset.emoji }}</text>
-				</view>
-				<view class="preset-icon-btn preset-random" @tap="randomRecommend">
-					<text class="preset-emoji">🎲</text>
-				</view>
-			</view>
-		</view>
-
-		<!-- Ingredient search section -->
+		<!-- Search Section -->
 		<view class="search-section">
+			<text class="section-title">🔍 食材搜索</text>
 			<view class="search-row">
 				<view class="search-input-wrapper">
 					<input 
@@ -53,18 +36,18 @@
 						@confirm="handleSearch"
 					/>
 					<view v-if="searchTerm" class="clear-btn" @tap="clearSearch">✕</view>
+					<button class="search-btn-inline" @tap="handleSearch" :disabled="!searchTerm.trim()">
+						<text v-if="isSearching">🔍</text>
+						<text v-else>🔍</text>
+					</button>
 				</view>
-				<button class="search-btn" @tap="handleSearch" :disabled="!searchTerm.trim()">
-					<text v-if="isSearching">🔍</text>
-					<text v-else>🔍</text>
-				</button>
 			</view>
 		</view>
 
-		<!-- Food Radar Chart section -->
-		<view class="radar-section">
-			<text class="section-title">📊 口味雷达图</text>
-			<view class="radar-container">
+		<!-- Radar and Presets Combined Section -->
+		<view class="radar-preset-section">
+			<text class="section-title">📊 口味偏好设置</text>
+			<view class="radar-preset-card">
 				<canvas 
 					type="2d"
 					id="radarChart"
@@ -74,11 +57,31 @@
 					@touchmove="onRadarTouchMove"
 					@touchend="onRadarTouchEnd"
 				></canvas>
-				<text class="debug-info">🎯 拖拽雷达图上的点来调整偏好值 (已移除滑块控制)</text>
-				<view class="radar-legend">
-					<view v-for="(pref, key) in preferences" :key="key" class="legend-item">
-						<view class="legend-color" :style="{ backgroundColor: getRadarColor(key) }"></view>
-						<text class="legend-label">{{ getPreferenceLabel(key) }}</text>
+				
+				<view class="preset-buttons-area">
+					<text class="preset-subtitle">🎯 快速预设</text>
+					<view class="preset-row">
+						<view 
+							class="preset-icon-btn"
+							@tap="selectHealthyPreset"
+						>
+							<text class="preset-emoji">🥗</text>
+						</view>
+						<view 
+							class="preset-icon-btn"
+							@tap="selectSpicyPreset"
+						>
+							<text class="preset-emoji">🌶️</text>
+						</view>
+						<view 
+							class="preset-icon-btn"
+							@tap="selectEasyPreset"
+						>
+							<text class="preset-emoji">👨‍🍳</text>
+						</view>
+						<view class="preset-icon-btn preset-random" @tap="randomRecommend">
+							<text class="preset-emoji">🎲</text>
+						</view>
 					</view>
 				</view>
 			</view>
@@ -263,13 +266,54 @@ export default {
 				});
 			}
 		},
-		selectPreset(preset) {
-			this.preferences = { ...preset.preferences };
+		selectHealthyPreset() {
+			this.preferences = {
+				healthy: 9,
+				difficulty: 2,
+				vegetarian: 8,
+				spicy: 2,
+				sweetness: 3
+			};
 			uni.removeStorageSync(CONFIG.STORAGE_KEYS.INGREDIENT_SEARCH);
 			this.fetchRecommendations();
-			this.loadFavorites(); // 更新收藏列表
+			this.loadFavorites();
+			this.drawRadarChart();
 			uni.showToast({
-				title: `已选择${preset.name}`,
+				title: '已选择健康模式',
+				icon: 'success'
+			});
+		},
+		selectSpicyPreset() {
+			this.preferences = {
+				healthy: 6,
+				difficulty: 3,
+				vegetarian: 4,
+				spicy: 9,
+				sweetness: 2
+			};
+			uni.removeStorageSync(CONFIG.STORAGE_KEYS.INGREDIENT_SEARCH);
+			this.fetchRecommendations();
+			this.loadFavorites();
+			this.drawRadarChart();
+			uni.showToast({
+				title: '已选择辣味模式',
+				icon: 'success'
+			});
+		},
+		selectEasyPreset() {
+			this.preferences = {
+				healthy: 6,
+				difficulty: 1,
+				vegetarian: 5,
+				spicy: 4,
+				sweetness: 5
+			};
+			uni.removeStorageSync(CONFIG.STORAGE_KEYS.INGREDIENT_SEARCH);
+			this.fetchRecommendations();
+			this.loadFavorites();
+			this.drawRadarChart();
+			uni.showToast({
+				title: '已选择简单模式',
 				icon: 'success'
 			});
 		},
@@ -283,7 +327,8 @@ export default {
 			};
 			uni.removeStorageSync(CONFIG.STORAGE_KEYS.INGREDIENT_SEARCH);
 			this.fetchRecommendations();
-			this.loadFavorites(); // 更新收藏列表
+			this.loadFavorites();
+			this.drawRadarChart();
 			uni.showToast({
 				title: '随机推荐已生成',
 				icon: 'success'
@@ -813,7 +858,7 @@ export default {
 <style>
 .container {
 	min-height: 100vh;
-	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	background: #ffffff;
 	position: relative;
 }
 
@@ -823,10 +868,10 @@ export default {
 }
 
 .header-content {
-	background: rgba(255, 255, 255, 0.1);
-	backdrop-filter: blur(10px);
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 	border-radius: 30rpx;
 	padding: 40rpx;
+	box-shadow: 0 8rpx 32rpx rgba(102, 126, 234, 0.3);
 }
 
 .greeting-section {
@@ -889,8 +934,12 @@ export default {
 	background: linear-gradient(45deg, #f59e0b, #ef4444);
 }
 
-.preset-section {
-	padding: 0 30rpx 40rpx;
+.search-section {
+	padding: 30rpx;
+	background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+	margin: 20rpx 30rpx;
+	border-radius: 20rpx;
+	box-shadow: 0 8rpx 32rpx rgba(16, 185, 129, 0.3);
 }
 
 .section-title {
@@ -900,6 +949,22 @@ export default {
 	font-weight: bold;
 	color: white;
 	margin-bottom: 30rpx;
+	text-shadow: 0 2rpx 4rpx rgba(0,0,0,0.3);
+}
+
+.section-subtitle {
+	display: block;
+	text-align: center;
+	font-size: 28rpx;
+	font-weight: 600;
+	color: #475569;
+	margin-bottom: 20rpx;
+}
+
+.divider {
+	height: 2rpx;
+	background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
+	margin: 30rpx 0;
 }
 
 .preset-row {
@@ -913,18 +978,21 @@ export default {
 .preset-icon-btn {
 	width: 80rpx;
 	height: 80rpx;
-	background: rgba(255, 255, 255, 0.15);
-	backdrop-filter: blur(10px);
-	border-radius: 50%;
+	background: linear-gradient(135deg, #fbbf24, #f59e0b);
+	border: 2rpx solid #f59e0b;
+	border-radius: 12rpx;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	transition: all 0.3s ease;
+	box-shadow: 0 4rpx 12rpx rgba(245, 158, 11, 0.3);
 }
 
 .preset-icon-btn:active {
-	transform: scale(0.9);
-	background: rgba(255, 255, 255, 0.25);
+	transform: scale(0.95);
+	background: linear-gradient(135deg, #f59e0b, #d97706);
+	border-color: #d97706;
+	box-shadow: 0 2rpx 8rpx rgba(217, 119, 6, 0.4);
 }
 
 .preset-emoji {
@@ -935,14 +1003,10 @@ export default {
 	background: linear-gradient(45deg, #8b5cf6, #6366f1);
 }
 
-.search-section {
-	padding: 0 30rpx 40rpx;
-}
 
 
 .search-row {
 	display: flex;
-	gap: 20rpx;
 	align-items: center;
 	margin-bottom: 20rpx;
 }
@@ -950,24 +1014,28 @@ export default {
 .search-input-wrapper {
 	position: relative;
 	flex: 1;
+	display: flex;
+	align-items: center;
 }
 
 .search-input {
-	width: 100%;
-	padding: 0 25rpx;
+	flex: 1;
+	padding: 0 25rpx 0 25rpx;
+	padding-right: 120rpx;
 	border-radius: 50rpx;
-	background: rgba(255, 255, 255, 0.9);
-	border: none;
+	background: #ffffff;
+	border: 2rpx solid #e2e8f0;
 	font-size: 28rpx;
 	box-sizing: border-box;
 	height: 68rpx;
 	line-height: 68rpx;
 	text-align: left;
+	box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
 }
 
 .clear-btn {
 	position: absolute;
-	right: 25rpx;
+	right: 80rpx;
 	top: 50%;
 	transform: translateY(-50%);
 	width: 35rpx;
@@ -979,6 +1047,34 @@ export default {
 	justify-content: center;
 	font-size: 20rpx;
 	color: #666;
+}
+
+.search-btn-inline {
+	position: absolute;
+	right: 8rpx;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 52rpx;
+	height: 52rpx;
+	border-radius: 26rpx;
+	background: linear-gradient(45deg, #10b981, #059669);
+	color: white;
+	border: none;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 24rpx;
+	transition: all 0.3s ease;
+	box-shadow: 0 2rpx 8rpx rgba(16, 185, 129, 0.3);
+}
+
+.search-btn-inline:disabled {
+	background: #d1d5db;
+	box-shadow: none;
+}
+
+.search-btn-inline:active:not(:disabled) {
+	transform: translateY(-50%) scale(0.95);
 }
 
 .search-btn {
@@ -1000,18 +1096,22 @@ export default {
 }
 
 
-.radar-section {
-	padding: 0 30rpx 40rpx;
+.radar-preset-section {
+	padding: 30rpx;
+	background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+	margin: 20rpx 30rpx;
+	border-radius: 20rpx;
+	box-shadow: 0 8rpx 32rpx rgba(245, 158, 11, 0.3);
 }
 
-.radar-container {
-	background: rgba(255, 255, 255, 0.15);
-	backdrop-filter: blur(10px);
+.radar-preset-card {
+	background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 50%, #6ee7b7 100%);
 	border-radius: 25rpx;
 	padding: 30rpx;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
+	box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.1);
 }
 
 .radar-canvas {
@@ -1027,40 +1127,29 @@ export default {
 	touch-action: none; /* Prevent scrolling while dragging */
 }
 
-.debug-info {
-	font-size: 24rpx;
-	color: #666;
-	text-align: center;
-	margin-bottom: 10rpx;
-}
-
-.radar-legend {
+.preset-buttons-area {
+	width: 100%;
 	display: flex;
-	flex-wrap: wrap;
-	justify-content: center;
-	gap: 20rpx;
-}
-
-.legend-item {
-	display: flex;
+	flex-direction: column;
 	align-items: center;
-	gap: 8rpx;
 }
 
-.legend-color {
-	width: 16rpx;
-	height: 16rpx;
-	border-radius: 50%;
+.preset-subtitle {
+	font-size: 24rpx;
+	font-weight: 600;
+	color: #065f46;
+	margin-bottom: 20rpx;
+	text-align: center;
 }
 
-.legend-label {
-	font-size: 22rpx;
-	color: white;
-}
 
 
 .recommendations-section {
-	padding: 0 30rpx 60rpx;
+	padding: 30rpx;
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	margin: 20rpx 30rpx;
+	border-radius: 20rpx;
+	box-shadow: 0 8rpx 32rpx rgba(102, 126, 234, 0.3);
 }
 
 .loading {
@@ -1068,6 +1157,7 @@ export default {
 	padding: 80rpx;
 	color: white;
 	font-size: 28rpx;
+	text-shadow: 0 2rpx 4rpx rgba(0,0,0,0.3);
 }
 
 .dish-grid {
@@ -1077,16 +1167,43 @@ export default {
 }
 
 .dish-card {
-	background: rgba(255, 255, 255, 0.15);
-	backdrop-filter: blur(10px);
 	border-radius: 25rpx;
 	padding: 35rpx;
 	transition: all 0.3s ease;
+	box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.15);
+	margin-bottom: 20rpx;
+	position: relative;
+	overflow: hidden;
+}
+
+.dish-card:nth-child(6n+1) {
+	background: linear-gradient(135deg, #fef3c7 0%, #fde68a 50%, #fbbf24 100%);
+}
+
+.dish-card:nth-child(6n+2) {
+	background: linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 50%, #a78bfa 100%);
+}
+
+.dish-card:nth-child(6n+3) {
+	background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 50%, #f9a8d4 100%);
+}
+
+.dish-card:nth-child(6n+4) {
+	background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 50%, #6ee7b7 100%);
+}
+
+.dish-card:nth-child(6n+5) {
+	background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 50%, #93c5fd 100%);
+}
+
+.dish-card:nth-child(6n+6) {
+	background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 50%, #fc8181 100%);
 }
 
 .dish-card:active {
 	transform: scale(0.98);
-	background: rgba(255, 255, 255, 0.25);
+	filter: brightness(0.95);
+	box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.2);
 }
 
 .dish-header {
@@ -1099,7 +1216,7 @@ export default {
 .dish-name {
 	font-size: 32rpx;
 	font-weight: bold;
-	color: white;
+	color: #1e293b;
 }
 
 .match-score {
@@ -1116,7 +1233,7 @@ export default {
 
 .dish-description {
 	font-size: 26rpx;
-	color: rgba(255, 255, 255, 0.9);
+	color: #64748b;
 	margin-bottom: 20rpx;
 	line-height: 1.4;
 	display: -webkit-box;
@@ -1134,38 +1251,38 @@ export default {
 
 .meta-item {
 	font-size: 24rpx;
-	color: rgba(255, 255, 255, 0.8);
+	color: #64748b;
 }
 
 .dish-cid {
 	margin-top: 15rpx;
 	padding-top: 10rpx;
-	border-top: 1rpx solid rgba(255, 255, 255, 0.2);
+	border-top: 1rpx solid #e2e8f0;
 }
 
 .cid-label {
-		font-size: 22rpx;
-		color: rgba(255, 255, 255, 0.7);
-		font-family: 'Courier New', monospace;
-		font-weight: normal;
-	}
-	
-	.dish-cid-tags {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 10rpx;
-		margin-top: 15rpx;
-		padding-top: 10rpx;
-		border-top: 1rpx solid rgba(255, 255, 255, 0.2);
-	}
-	
-	.cid-tag {
-		padding: 5rpx 15rpx;
-		background: rgba(99, 102, 241, 0.3);
-		border-radius: 15rpx;
-		font-size: 20rpx;
-		color: white;
-	}
+	font-size: 22rpx;
+	color: #64748b;
+	font-family: 'Courier New', monospace;
+	font-weight: normal;
+}
+
+.dish-cid-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10rpx;
+	margin-top: 15rpx;
+	padding-top: 10rpx;
+	border-top: 1rpx solid #e2e8f0;
+}
+
+.cid-tag {
+	padding: 5rpx 15rpx;
+	background: #6366f1;
+	border-radius: 15rpx;
+	font-size: 20rpx;
+	color: white;
+}
 
 .test-api-btn {
 		position: absolute;

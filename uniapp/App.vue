@@ -26,7 +26,7 @@
 <style>
 	/* 全局样式 */
 	page {
-		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+		background: #ffffff;
 		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
 	}
 	

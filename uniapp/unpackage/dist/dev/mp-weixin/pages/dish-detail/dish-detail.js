@@ -103,11 +103,13 @@ var render = function () {
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
   var g0 = _vm.dish.matchScore ? Math.round(_vm.dish.matchScore) : null
+  var l0 = _vm.dish.cid ? _vm.splitCidTags(_vm.dish.cid) : null
   _vm.$mp.data = Object.assign(
     {},
     {
       $root: {
         g0: g0,
+        l0: l0,
       },
     }
   )
@@ -232,6 +234,14 @@ var _config = __webpack_require__(/*! ../../utils/config.js */ 44);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
 var _default = {
   data: function data() {
     return {
@@ -246,13 +256,15 @@ var _default = {
         ingredients: [],
         steps: [],
         matchScore: 0
-      }
+      },
+      isFavorited: false
     };
   },
   onLoad: function onLoad(options) {
     if (options.dish) {
       try {
         this.dish = JSON.parse(decodeURIComponent(options.dish));
+        this.checkIfFavorited();
       } catch (e) {
         console.error('Failed to parse dish data:', e);
         uni.showToast({
@@ -283,24 +295,25 @@ var _default = {
               case 4:
                 recipe = _context.sent;
                 _this.dish = _api.default.convertRecipeToDish(recipe);
-                _context.next = 13;
+                _this.checkIfFavorited();
+                _context.next = 14;
                 break;
-              case 8:
-                _context.prev = 8;
+              case 9:
+                _context.prev = 9;
                 _context.t0 = _context["catch"](1);
                 console.error('获取菜品详情失败:', _context.t0);
                 _api.default.handleApiError(_context.t0);
                 uni.navigateBack();
-              case 13:
-                _context.prev = 13;
+              case 14:
+                _context.prev = 14;
                 uni.hideLoading();
-                return _context.finish(13);
-              case 16:
+                return _context.finish(14);
+              case 17:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, null, [[1, 8, 13, 16]]);
+        }, _callee, null, [[1, 9, 14, 17]]);
       }))();
     },
     startCooking: function startCooking() {
@@ -310,26 +323,54 @@ var _default = {
         duration: 2000
       });
     },
-    addToFavorites: function addToFavorites() {
+    checkIfFavorited: function checkIfFavorited() {
       var _this2 = this;
-      // 收藏功能
+      // 检查是否已收藏
       var favorites = uni.getStorageSync(_config.CONFIG.STORAGE_KEYS.FAVORITES) || [];
-      var isAlreadyFavorited = favorites.some(function (fav) {
+      this.isFavorited = favorites.some(function (fav) {
         return fav.id === _this2.dish.id;
       });
+    },
+    toggleFavorite: function toggleFavorite() {
+      var _this3 = this;
+      // 收藏/取消收藏功能
+      var favorites = uni.getStorageSync(_config.CONFIG.STORAGE_KEYS.FAVORITES) || [];
+      var isAlreadyFavorited = favorites.some(function (fav) {
+        return fav.id === _this3.dish.id;
+      });
       if (isAlreadyFavorited) {
+        // 取消收藏
+        favorites = favorites.filter(function (fav) {
+          return fav.id !== _this3.dish.id;
+        });
+        uni.setStorageSync(_config.CONFIG.STORAGE_KEYS.FAVORITES, favorites);
+        this.isFavorited = false;
         uni.showToast({
-          title: '已在收藏夹中',
-          icon: 'none'
+          title: '已取消收藏',
+          icon: 'success'
         });
       } else {
+        // 添加收藏
         favorites.push(this.dish);
         uni.setStorageSync(_config.CONFIG.STORAGE_KEYS.FAVORITES, favorites);
+        this.isFavorited = true;
         uni.showToast({
           title: '收藏成功',
           icon: 'success'
         });
       }
+
+      // 通知首页更新收藏列表
+      uni.$emit('favoritesUpdated');
+    },
+    // Split CID string by comma and trim whitespace
+    splitCidTags: function splitCidTags(cidString) {
+      if (!cidString) return [];
+      return cidString.split(',').map(function (tag) {
+        return tag.trim();
+      }).filter(function (tag) {
+        return tag.length > 0;
+      });
     }
   }
 };

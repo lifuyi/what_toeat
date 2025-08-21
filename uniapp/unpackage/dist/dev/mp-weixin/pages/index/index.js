@@ -103,33 +103,38 @@ var render = function () {
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
   var g0 = _vm.searchTerm.trim()
-  var l0 = _vm.__map(_vm.preferences, function (pref, key) {
-    var $orig = _vm.__get_orig(pref)
-    var m0 = _vm.getRadarColor(key)
-    var m1 = _vm.getPreferenceLabel(key)
-    return {
-      $orig: $orig,
-      m0: m0,
-      m1: m1,
-    }
-  })
   var l1 = !_vm.loading
     ? _vm.__map(_vm.recommendedDishes, function (dish, index) {
         var $orig = _vm.__get_orig(dish)
         var g1 = dish.matchScore ? Math.round(dish.matchScore) : null
+        var l0 = dish.cid ? _vm.splitCidTags(dish.cid) : null
         return {
           $orig: $orig,
           g1: g1,
+          l0: l0,
         }
       })
     : null
+  var g2 = _vm.favoriteDishes.length
+  var l2 =
+    g2 > 0
+      ? _vm.__map(_vm.favoriteDishes, function (dish, index) {
+          var $orig = _vm.__get_orig(dish)
+          var g3 = dish.matchScore ? Math.round(dish.matchScore) : null
+          return {
+            $orig: $orig,
+            g3: g3,
+          }
+        })
+      : null
   _vm.$mp.data = Object.assign(
     {},
     {
       $root: {
         g0: g0,
-        l0: l0,
         l1: l1,
+        g2: g2,
+        l2: l2,
       },
     }
   )
@@ -192,6 +197,7 @@ var _default = {
       preferences: _objectSpread({}, _config.CONFIG.DEFAULT_PREFERENCES),
       presets: _config.CONFIG.PRESETS,
       recommendedDishes: [],
+      favoriteDishes: [],
       showTestButton: true,
       // 开发环境显示测试按钮
       isDragging: false,
@@ -200,13 +206,24 @@ var _default = {
     };
   },
   onLoad: function onLoad() {
+    var _this = this;
     this.initializeApp();
+    this.loadFavorites();
     this.fetchRecommendations();
+
+    // 监听收藏更新事件
+    uni.$on('favoritesUpdated', function () {
+      _this.loadFavorites();
+    });
   },
   onReady: function onReady() {
     console.log('Page ready, drawing radar chart...');
     console.log('Preferences:', this.preferences);
     this.drawRadarChart();
+  },
+  onUnload: function onUnload() {
+    // 移除事件监听器
+    uni.$off('favoritesUpdated');
   },
   methods: {
     initializeApp: function initializeApp() {
@@ -236,12 +253,84 @@ var _default = {
       };
       this.currentDate = now.toLocaleDateString('zh-CN', options);
     },
-    selectPreset: function selectPreset(preset) {
-      this.preferences = _objectSpread({}, preset.preferences);
+    loadFavorites: function loadFavorites() {
+      try {
+        var favorites = uni.getStorageSync(_config.CONFIG.STORAGE_KEYS.FAVORITES) || [];
+        var searchTerm = uni.getStorageSync(_config.CONFIG.STORAGE_KEYS.INGREDIENT_SEARCH);
+
+        // 如果有搜索词，过滤收藏列表
+        if (searchTerm) {
+          this.favoriteDishes = favorites.filter(function (dish) {
+            return dish.ingredients.some(function (ingredient) {
+              return ingredient.includes(searchTerm);
+            }) || dish.name.includes(searchTerm);
+          });
+        } else {
+          this.favoriteDishes = favorites;
+        }
+        uni.showToast({
+          title: '收藏列表已更新',
+          icon: 'success',
+          duration: 1000
+        });
+      } catch (e) {
+        console.error('Failed to load favorites:', e);
+        this.favoriteDishes = [];
+        uni.showToast({
+          title: '加载收藏失败',
+          icon: 'error',
+          duration: 1000
+        });
+      }
+    },
+    selectHealthyPreset: function selectHealthyPreset() {
+      this.preferences = {
+        healthy: 9,
+        difficulty: 2,
+        vegetarian: 8,
+        spicy: 2,
+        sweetness: 3
+      };
       uni.removeStorageSync(_config.CONFIG.STORAGE_KEYS.INGREDIENT_SEARCH);
       this.fetchRecommendations();
+      this.loadFavorites();
+      this.drawRadarChart();
       uni.showToast({
-        title: "\u5DF2\u9009\u62E9".concat(preset.name),
+        title: '已选择健康模式',
+        icon: 'success'
+      });
+    },
+    selectSpicyPreset: function selectSpicyPreset() {
+      this.preferences = {
+        healthy: 6,
+        difficulty: 3,
+        vegetarian: 4,
+        spicy: 9,
+        sweetness: 2
+      };
+      uni.removeStorageSync(_config.CONFIG.STORAGE_KEYS.INGREDIENT_SEARCH);
+      this.fetchRecommendations();
+      this.loadFavorites();
+      this.drawRadarChart();
+      uni.showToast({
+        title: '已选择辣味模式',
+        icon: 'success'
+      });
+    },
+    selectEasyPreset: function selectEasyPreset() {
+      this.preferences = {
+        healthy: 6,
+        difficulty: 1,
+        vegetarian: 5,
+        spicy: 4,
+        sweetness: 5
+      };
+      uni.removeStorageSync(_config.CONFIG.STORAGE_KEYS.INGREDIENT_SEARCH);
+      this.fetchRecommendations();
+      this.loadFavorites();
+      this.drawRadarChart();
+      uni.showToast({
+        title: '已选择简单模式',
         icon: 'success'
       });
     },
@@ -255,19 +344,22 @@ var _default = {
       };
       uni.removeStorageSync(_config.CONFIG.STORAGE_KEYS.INGREDIENT_SEARCH);
       this.fetchRecommendations();
+      this.loadFavorites();
+      this.drawRadarChart();
       uni.showToast({
         title: '随机推荐已生成',
         icon: 'success'
       });
     },
     handleSearch: function handleSearch() {
-      var _this = this;
+      var _this2 = this;
       if (!this.searchTerm.trim()) return;
       this.isSearching = true;
       uni.setStorageSync(_config.CONFIG.STORAGE_KEYS.INGREDIENT_SEARCH, this.searchTerm.trim());
       setTimeout(function () {
-        _this.fetchRecommendations();
-        _this.isSearching = false;
+        _this2.fetchRecommendations();
+        _this2.loadFavorites(); // 更新收藏列表
+        _this2.isSearching = false;
         uni.showToast({
           title: '搜索完成',
           icon: 'success'
@@ -278,6 +370,7 @@ var _default = {
       this.searchTerm = '';
       uni.removeStorageSync(_config.CONFIG.STORAGE_KEYS.INGREDIENT_SEARCH);
       this.fetchRecommendations();
+      this.loadFavorites(); // 更新收藏列表
     },
     getPreferenceLabel: function getPreferenceLabel(key) {
       var labels = {
@@ -290,14 +383,14 @@ var _default = {
       return labels[key] || key;
     },
     fetchRecommendations: function fetchRecommendations() {
-      var _this2 = this;
+      var _this3 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee() {
         var searchTerm, recipes, searchResult;
         return _regenerator.default.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                _this2.loading = true;
+                _this3.loading = true;
                 _context.prev = 1;
                 searchTerm = uni.getStorageSync(_config.CONFIG.STORAGE_KEYS.INGREDIENT_SEARCH);
                 recipes = [];
@@ -315,29 +408,32 @@ var _default = {
                 break;
               case 11:
                 _context.next = 13;
-                return _api.default.getRecommendedRecipes(_this2.preferences);
+                return _api.default.getRecommendedRecipes(_this3.preferences);
               case 13:
                 recipes = _context.sent;
               case 14:
                 // 转换数据格式并计算匹配分数
                 console.log('Raw API recipes:', recipes);
-                _this2.recommendedDishes = recipes.map(function (recipe) {
+                _this3.recommendedDishes = recipes.map(function (recipe) {
                   console.log('Converting recipe:', recipe);
                   var dish = _api.default.convertRecipeToDish(recipe);
                   console.log('Converted dish:', dish);
-                  dish.matchScore = _api.default.calculateMatchScore(dish, _this2.preferences);
+                  dish.matchScore = _api.default.calculateMatchScore(dish, _this3.preferences);
                   return dish;
                 });
-                console.log('Final recommended dishes:', _this2.recommendedDishes);
+                console.log('Final recommended dishes:', _this3.recommendedDishes);
 
                 // 按匹配分数排序
-                _this2.recommendedDishes.sort(function (a, b) {
+                _this3.recommendedDishes.sort(function (a, b) {
                   return (b.matchScore || 0) - (a.matchScore || 0);
                 });
-                _context.next = 26;
+
+                // 更新收藏列表
+                _this3.loadFavorites();
+                _context.next = 27;
                 break;
-              case 20:
-                _context.prev = 20;
+              case 21:
+                _context.prev = 21;
                 _context.t0 = _context["catch"](1);
                 console.error('获取推荐失败:', _context.t0);
                 _api.default.handleApiError(_context.t0);
@@ -348,17 +444,17 @@ var _default = {
                   icon: 'error',
                   duration: 3000
                 });
-                _this2.recommendedDishes = [];
-              case 26:
-                _context.prev = 26;
-                _this2.loading = false;
-                return _context.finish(26);
-              case 29:
+                _this3.recommendedDishes = [];
+              case 27:
+                _context.prev = 27;
+                _this3.loading = false;
+                return _context.finish(27);
+              case 30:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, null, [[1, 20, 26, 29]]);
+        }, _callee, null, [[1, 21, 27, 30]]);
       }))();
     },
     getFallbackDishes: function getFallbackDishes() {
@@ -452,16 +548,16 @@ var _default = {
       return colors[key] || '#6366f1';
     },
     drawRadarChart: function drawRadarChart() {
-      var _this3 = this;
+      var _this4 = this;
       // Add a small delay to ensure canvas is ready
       this.$nextTick(function () {
         setTimeout(function () {
-          _this3.renderRadarChart();
+          _this4.renderRadarChart();
         }, 200); // Increased delay
       });
     },
     renderRadarChart: function renderRadarChart() {
-      var _this4 = this;
+      var _this5 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee2() {
         var query, canvas, ctx, dpr, canvasWidth, canvasHeight, centerX, centerY, radius, sides, i, angleStep, labels, labelNames, _i, angle, x, y, labelX, labelY, _i2, _angle, value, distance, _x, _y, _i3, _angle2, _value, _distance, _x2, _y2;
         return _regenerator.default.wrap(function _callee2$(_context2) {
@@ -471,7 +567,7 @@ var _default = {
                 console.log('Starting Canvas 2D radar chart render...');
                 _context2.prev = 1;
                 // Use Canvas 2D API (modern approach)
-                query = uni.createSelectorQuery().in(_this4);
+                query = uni.createSelectorQuery().in(_this5);
                 _context2.next = 5;
                 return new Promise(function (resolve) {
                   query.select('#radarChart').fields({
@@ -507,7 +603,7 @@ var _default = {
                 centerX = canvasWidth / 2;
                 centerY = canvasHeight / 2;
                 radius = Math.min(canvasWidth, canvasHeight) * 0.25; // 25% of canvas size
-                sides = Object.keys(_this4.preferences).length; // Clear canvas with white background
+                sides = Object.keys(_this5.preferences).length; // Clear canvas with white background
                 ctx.fillStyle = '#ffffff';
                 ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
@@ -524,7 +620,7 @@ var _default = {
 
                 // Draw axis lines and labels
                 angleStep = 2 * Math.PI / sides;
-                labels = Object.keys(_this4.preferences);
+                labels = Object.keys(_this5.preferences);
                 labelNames = {
                   healthy: '健康',
                   difficulty: '难度',
@@ -559,7 +655,7 @@ var _default = {
                 ctx.beginPath();
                 for (_i2 = 0; _i2 < sides; _i2++) {
                   _angle = _i2 * angleStep - Math.PI / 2;
-                  value = _this4.preferences[labels[_i2]] || 1;
+                  value = _this5.preferences[labels[_i2]] || 1;
                   distance = radius * Math.max(1, Math.min(10, value)) / 10;
                   _x = centerX + Math.cos(_angle) * distance;
                   _y = centerY + Math.sin(_angle) * distance;
@@ -576,7 +672,7 @@ var _default = {
                 // Draw data points with enhanced interactivity
                 for (_i3 = 0; _i3 < sides; _i3++) {
                   _angle2 = _i3 * angleStep - Math.PI / 2;
-                  _value = _this4.preferences[labels[_i3]] || 1;
+                  _value = _this5.preferences[labels[_i3]] || 1;
                   _distance = radius * Math.max(1, Math.min(10, _value)) / 10;
                   _x2 = centerX + Math.cos(_angle2) * _distance;
                   _y2 = centerY + Math.sin(_angle2) * _distance; // Draw outer ring for better touch target
@@ -616,7 +712,7 @@ var _default = {
                 _context2.t0 = _context2["catch"](1);
                 console.error('Canvas 2D rendering failed:', _context2.t0);
                 // Fallback to old method if Canvas 2D is not supported
-                _this4.renderRadarChartFallback();
+                _this5.renderRadarChartFallback();
               case 51:
               case "end":
                 return _context2.stop();
@@ -714,7 +810,7 @@ var _default = {
       this.draggedPoint = null;
     },
     handleRadarInteraction: function handleRadarInteraction(e) {
-      var _this5 = this;
+      var _this6 = this;
       if (!e.touches || e.touches.length === 0) return;
       var touch = e.touches[0];
 
@@ -729,11 +825,11 @@ var _default = {
         // Convert to canvas coordinates (accounting for rpx to px conversion)
         var canvasX = relativeX / rect.width * 300;
         var canvasY = relativeY / rect.height * 300;
-        _this5.updatePreferenceFromTouch(canvasX, canvasY);
+        _this6.updatePreferenceFromTouch(canvasX, canvasY);
       }).exec();
     },
     updatePreferenceFromTouch: function updatePreferenceFromTouch(canvasX, canvasY) {
-      var _this6 = this;
+      var _this7 = this;
       var centerX = 150;
       var centerY = 150;
       var maxRadius = 75; // Maximum radius for preferences
@@ -781,7 +877,7 @@ var _default = {
           // Debounced API call
           clearTimeout(this.debounceTimer);
           this.debounceTimer = setTimeout(function () {
-            _this6.fetchRecommendations();
+            _this7.fetchRecommendations();
           }, 500);
 
           // Show feedback
@@ -796,6 +892,15 @@ var _default = {
     getFirstThreeTags: function getFirstThreeTags(tags) {
       if (!tags || !Array.isArray(tags)) return '';
       return tags.slice(0, 3).join('\r\n');
+    },
+    // Split CID string by comma and trim whitespace
+    splitCidTags: function splitCidTags(cidString) {
+      if (!cidString) return [];
+      return cidString.split(',').map(function (tag) {
+        return tag.trim();
+      }).filter(function (tag) {
+        return tag.length > 0;
+      });
     }
   }
 };

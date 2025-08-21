@@ -193,15 +193,16 @@ export default {
 <style>
 .container {
 	min-height: 100vh;
-	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	background: #ffffff;
 	padding: 30rpx;
 }
 
 .dish-detail {
-	background: rgba(255, 255, 255, 0.15);
-	backdrop-filter: blur(10px);
+	background: #f8fafc;
+	border: 2rpx solid #e2e8f0;
 	border-radius: 30rpx;
 	padding: 40rpx;
+	box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.08);
 }
 
 .dish-header {
@@ -216,7 +217,7 @@ export default {
 .dish-name {
 	font-size: 40rpx;
 	font-weight: bold;
-	color: white;
+	color: #1e293b;
 	flex: 1;
 }
 
