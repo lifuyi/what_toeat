@@ -12,7 +12,6 @@
 				<view class="test-api-btn" @tap="goToApiTest" v-if="showTestButton">
 					<text class="test-text">🔧 API测试</text>
 				</view>
-				<text class="subtitle">调整你的口味偏好，获取个性化菜品推荐</text>
 				<view class="date-info">
 					<text class="date-text">{{ currentDate }}</text>
 				</view>
@@ -26,22 +25,7 @@
 
 		<!-- Search Section -->
 		<view class="search-section">
-			<text class="section-title">🔍 食材搜索</text>
-			<view class="search-row">
-				<view class="search-input-wrapper">
-					<input 
-						class="search-input" 
-						placeholder="输入您有的食材..."
-						v-model="searchTerm"
-						@confirm="handleSearch"
-					/>
-					<view v-if="searchTerm" class="clear-btn" @tap="clearSearch">✕</view>
-					<button class="search-btn-inline" @tap="handleSearch" :disabled="!searchTerm.trim()">
-						<text v-if="isSearching">🔍</text>
-						<text v-else>🔍</text>
-					</button>
-				</view>
-			</view>
+			
 		</view>
 
 		<!-- Radar and Presets Combined Section -->
@@ -59,7 +43,7 @@
 				></canvas>
 				
 				<view class="preset-buttons-area">
-					<text class="preset-subtitle">🎯 快速预设</text>
+					<text class="preset-subtitle">🎯 快速预设，从左起：健康、辣食、方便，随机</text>
 					<view class="preset-row">
 						<view 
 							class="preset-icon-btn"
@@ -81,6 +65,22 @@
 						</view>
 						<view class="preset-icon-btn preset-random" @tap="randomRecommend">
 							<text class="preset-emoji">🎲</text>
+						</view>
+					</view>
+					<text class="preset-subtitle">🔍 食材搜索</text>
+					<view class="search-row">
+						<view class="search-input-wrapper">
+							<input 
+								class="search-input" 
+								placeholder="输入您有的食材..."
+								v-model="searchTerm"
+								@confirm="handleSearch"
+							/>
+							<view v-if="searchTerm" class="clear-btn" @tap="clearSearch">✕</view>
+							<button class="search-btn-inline" @tap="handleSearch" :disabled="!searchTerm.trim()">
+								<text v-if="isSearching">🔍</text>
+								<text v-else>🔍</text>
+							</button>
 						</view>
 					</view>
 				</view>
@@ -936,7 +936,7 @@ export default {
 
 .search-section {
 	padding: 30rpx;
-	background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+	background: linear-gradient(135deg, #10b981, #84cc16);
 	margin: 20rpx 30rpx;
 	border-radius: 20rpx;
 	box-shadow: 0 8rpx 32rpx rgba(16, 185, 129, 0.3);
@@ -978,7 +978,7 @@ export default {
 .preset-icon-btn {
 	width: 80rpx;
 	height: 80rpx;
-	background: linear-gradient(135deg, #fbbf24, #f59e0b);
+	background: linear-gradient(135deg, #fbbf24 40%, #f59e0b);
 	border: 2rpx solid #f59e0b;
 	border-radius: 12rpx;
 	display: flex;
@@ -1105,7 +1105,7 @@ export default {
 }
 
 .radar-preset-card {
-	background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 50%, #6ee7b7 100%);
+	background: white;
 	border-radius: 25rpx;
 	padding: 30rpx;
 	display: flex;
@@ -1138,7 +1138,8 @@ export default {
 	font-size: 24rpx;
 	font-weight: 600;
 	color: #065f46;
-	margin-bottom: 20rpx;
+	margin-bottom: 10rpx;
+	margin-top: 5rpx;
 	text-align: center;
 }
 
