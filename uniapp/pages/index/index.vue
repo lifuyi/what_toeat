@@ -84,7 +84,6 @@
 			</view>
 		</view>
 
-
 		<!-- Recommended dishes section -->
 		<view class="recommendations-section">
 			<text class="section-title">🍳 为您推荐</text>
@@ -107,7 +106,7 @@
 					</view>
 					
 					<!-- Line 2: Description -->
-					<text class="dish-description">{{ dish.description }}</text>
+					<text class="dish-description">{{ dish.description || '美味当家，点击查看详细做法...' }}</text>
 					
 					<!-- Line 3: Time and Difficulty -->
 					<view class="dish-meta">
@@ -120,6 +119,45 @@
 						<text v-for="(cidTag, index) in splitCidTags(dish.cid)" :key="index" class="cid-tag">{{ cidTag }}</text>
 					</view>
 				</view>
+			</view>
+		</view>
+		
+		<!-- Favorites section -->
+		<!-- Favorites section -->
+		<view class="favorites-section">
+			<view class="section-header">
+				<text class="section-title">❤️ 我的收藏</text>
+				<view class="refresh-btn" @tap="loadFavorites">
+					<text class="refresh-text">🔄</text>
+				</view>
+			</view>
+			<view v-if="favoriteDishes.length > 0" class="dish-grid">
+				<view 
+					v-for="(dish, index) in favoriteDishes" 
+					:key="dish.id"
+					class="dish-card favorite-card"
+					@tap="viewDishDetail(dish)"
+				>
+					<!-- Line 1: Title with match score -->
+					<view class="dish-header">
+						<text class="dish-name">{{ dish.name }}</text>
+						<view v-if="dish.matchScore" class="match-score">
+							<text class="score-text">{{ Math.round(dish.matchScore) }}%匹配</text>
+						</view>
+					</view>
+					
+					<!-- Line 2: Description -->
+					<text class="dish-description">{{ dish.description || '美味当家，点击查看详细做法...' }}</text>
+					
+					<!-- Line 3: Time and Difficulty -->
+					<view class="dish-meta">
+						<text class="meta-item">⏱️ {{ dish.cookingTime }}</text>
+						<text class="meta-item">📊 {{ dish.difficulty }}</text>
+					</view>
+				</view>
+			</view>
+			<view v-else class="no-favorites">
+				<text class="no-favorites-text">还没有收藏的菜品，快去发现你喜欢的美食吧！</text>
 			</view>
 		</view>
 	</view>
@@ -141,6 +179,7 @@ export default {
 			preferences: { ...CONFIG.DEFAULT_PREFERENCES },
 			presets: CONFIG.PRESETS,
 			recommendedDishes: [],
+			favoriteDishes: [],
 			showTestButton: true, // 开发环境显示测试按钮
 			isDragging: false,
 			draggedPoint: null,
@@ -149,12 +188,22 @@ export default {
 	},
 	onLoad() {
 		this.initializeApp();
+		this.loadFavorites();
 		this.fetchRecommendations();
+		
+		// 监听收藏更新事件
+		uni.$on('favoritesUpdated', () => {
+			this.loadFavorites();
+		});
 	},
 	onReady() {
 		console.log('Page ready, drawing radar chart...');
 		console.log('Preferences:', this.preferences);
 		this.drawRadarChart();
+	},
+	onUnload() {
+		// 移除事件监听器
+		uni.$off('favoritesUpdated');
 	},
 	methods: {
 		initializeApp() {
@@ -184,10 +233,41 @@ export default {
 			};
 			this.currentDate = now.toLocaleDateString('zh-CN', options);
 		},
+		loadFavorites() {
+			try {
+				const favorites = uni.getStorageSync(CONFIG.STORAGE_KEYS.FAVORITES) || [];
+				const searchTerm = uni.getStorageSync(CONFIG.STORAGE_KEYS.INGREDIENT_SEARCH);
+				
+				// 如果有搜索词，过滤收藏列表
+				if (searchTerm) {
+					this.favoriteDishes = favorites.filter(dish => 
+						dish.ingredients.some(ingredient => ingredient.includes(searchTerm)) ||
+						dish.name.includes(searchTerm)
+					);
+				} else {
+					this.favoriteDishes = favorites;
+				}
+				
+				uni.showToast({
+					title: '收藏列表已更新',
+					icon: 'success',
+					duration: 1000
+				});
+			} catch (e) {
+				console.error('Failed to load favorites:', e);
+				this.favoriteDishes = [];
+				uni.showToast({
+					title: '加载收藏失败',
+					icon: 'error',
+					duration: 1000
+				});
+			}
+		},
 		selectPreset(preset) {
 			this.preferences = { ...preset.preferences };
 			uni.removeStorageSync(CONFIG.STORAGE_KEYS.INGREDIENT_SEARCH);
 			this.fetchRecommendations();
+			this.loadFavorites(); // 更新收藏列表
 			uni.showToast({
 				title: `已选择${preset.name}`,
 				icon: 'success'
@@ -203,6 +283,7 @@ export default {
 			};
 			uni.removeStorageSync(CONFIG.STORAGE_KEYS.INGREDIENT_SEARCH);
 			this.fetchRecommendations();
+			this.loadFavorites(); // 更新收藏列表
 			uni.showToast({
 				title: '随机推荐已生成',
 				icon: 'success'
@@ -216,6 +297,7 @@ export default {
 			
 			setTimeout(() => {
 				this.fetchRecommendations();
+				this.loadFavorites(); // 更新收藏列表
 				this.isSearching = false;
 				uni.showToast({
 					title: '搜索完成',
@@ -227,6 +309,7 @@ export default {
 			this.searchTerm = '';
 			uni.removeStorageSync(CONFIG.STORAGE_KEYS.INGREDIENT_SEARCH);
 			this.fetchRecommendations();
+			this.loadFavorites(); // 更新收藏列表
 		},
 		getPreferenceLabel(key) {
 			const labels = {
@@ -268,6 +351,9 @@ export default {
 				
 				// 按匹配分数排序
 				this.recommendedDishes.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+				
+				// 更新收藏列表
+				this.loadFavorites();
 				
 			} catch (error) {
 				console.error('获取推荐失败:', error);
@@ -1033,6 +1119,11 @@ export default {
 	color: rgba(255, 255, 255, 0.9);
 	margin-bottom: 20rpx;
 	line-height: 1.4;
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 4;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .dish-meta {
@@ -1077,19 +1168,72 @@ export default {
 	}
 
 .test-api-btn {
-	position: absolute;
-	top: 20rpx;
-	right: 20rpx;
-	background: rgba(255, 255, 255, 0.2);
-	backdrop-filter: blur(10px);
-	border-radius: 15rpx;
-	padding: 10rpx 20rpx;
-	border: 2rpx solid rgba(255, 255, 255, 0.3);
-}
+		position: absolute;
+		top: 20rpx;
+		right: 20rpx;
+		background: rgba(255, 255, 255, 0.2);
+		backdrop-filter: blur(10px);
+		border-radius: 15rpx;
+		padding: 10rpx 20rpx;
+		border: 2rpx solid rgba(255, 255, 255, 0.3);
+	}
 
 .test-text {
-	font-size: 24rpx;
-	color: white;
-	font-weight: bold;
-}
+		font-size: 24rpx;
+		color: white;
+		font-weight: bold;
+	}
+	
+	.favorites-section {
+		padding: 0 30rpx 60rpx;
+	}
+	
+	.favorite-card {
+		background: rgba(255, 255, 255, 0.25);
+		border: 2rpx solid rgba(255, 100, 100, 0.5);
+	}
+	
+	.section-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 30rpx;
+	}
+	
+	.refresh-btn {
+		padding: 10rpx 20rpx;
+		background: rgba(255, 255, 255, 0.2);
+		border-radius: 15rpx;
+	}
+	
+	.refresh-text {
+		font-size: 24rpx;
+		color: white;
+	}
+	
+	.no-favorites {
+		text-align: center;
+		padding: 40rpx;
+		background: rgba(255, 255, 255, 0.1);
+		border-radius: 25rpx;
+	}
+	
+	.no-favorites-text {
+		font-size: 28rpx;
+		color: rgba(255, 255, 255, 0.8);
+	}
+	
+	.random-btn {
+		margin-top: 30rpx;
+		padding: 20rpx 40rpx;
+		background: linear-gradient(45deg, #8b5cf6, #6366f1);
+		border-radius: 25rpx;
+		border: none;
+	}
+	
+	.random-btn-text {
+		color: white;
+		font-size: 28rpx;
+		font-weight: bold;
+	}
 </style>

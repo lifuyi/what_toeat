@@ -11,7 +11,7 @@
 
 			<!-- Description -->
 			<view class="dish-description">
-				<text class="description-text">{{ dish.description }}</text>
+				<text class="description-text">{{ dish.description || '美味当家，点击查看详细做法...' }}</text>
 			</view>
 
 			<!-- Meta info -->
@@ -75,8 +75,8 @@
 				<button class="action-btn primary" @tap="startCooking">
 					<text class="btn-text">🍳 开始制作</text>
 				</button>
-				<button class="action-btn secondary" @tap="addToFavorites">
-					<text class="btn-text">❤️ 收藏菜谱</text>
+				<button class="action-btn secondary" @tap="toggleFavorite">
+					<text class="btn-text">{{ isFavorited ? '💔 取消收藏' : '❤️ 收藏菜谱' }}</text>
 				</button>
 			</view>
 		</view>
@@ -101,13 +101,15 @@ export default {
 				ingredients: [],
 				steps: [],
 				matchScore: 0
-			}
+			},
+			isFavorited: false
 		}
 	},
 	onLoad(options) {
 		if (options.dish) {
 			try {
 				this.dish = JSON.parse(decodeURIComponent(options.dish));
+				this.checkIfFavorited();
 			} catch (e) {
 				console.error('Failed to parse dish data:', e);
 				uni.showToast({
@@ -129,6 +131,7 @@ export default {
 			try {
 				const recipe = await api.getRecipeById(id);
 				this.dish = api.convertRecipeToDish(recipe);
+				this.checkIfFavorited();
 			} catch (error) {
 				console.error('获取菜品详情失败:', error);
 				api.handleApiError(error);
@@ -144,24 +147,38 @@ export default {
 				duration: 2000
 			});
 		},
-		addToFavorites() {
-			// 收藏功能
+		checkIfFavorited() {
+			// 检查是否已收藏
 			const favorites = uni.getStorageSync(CONFIG.STORAGE_KEYS.FAVORITES) || [];
+			this.isFavorited = favorites.some(fav => fav.id === this.dish.id);
+		},
+		toggleFavorite() {
+			// 收藏/取消收藏功能
+			let favorites = uni.getStorageSync(CONFIG.STORAGE_KEYS.FAVORITES) || [];
 			const isAlreadyFavorited = favorites.some(fav => fav.id === this.dish.id);
 			
 			if (isAlreadyFavorited) {
+				// 取消收藏
+				favorites = favorites.filter(fav => fav.id !== this.dish.id);
+				uni.setStorageSync(CONFIG.STORAGE_KEYS.FAVORITES, favorites);
+				this.isFavorited = false;
 				uni.showToast({
-					title: '已在收藏夹中',
-					icon: 'none'
+					title: '已取消收藏',
+					icon: 'success'
 				});
 			} else {
+				// 添加收藏
 				favorites.push(this.dish);
 				uni.setStorageSync(CONFIG.STORAGE_KEYS.FAVORITES, favorites);
+				this.isFavorited = true;
 				uni.showToast({
 					title: '收藏成功',
 					icon: 'success'
 				});
 			}
+			
+			// 通知首页更新收藏列表
+			uni.$emit('favoritesUpdated');
 		},
 		
 		// Split CID string by comma and trim whitespace
@@ -220,10 +237,15 @@ export default {
 }
 
 .description-text {
-	font-size: 28rpx;
-	color: rgba(255, 255, 255, 0.9);
-	line-height: 1.5;
-}
+		font-size: 28rpx;
+		color: rgba(255, 255, 255, 0.9);
+		line-height: 1.5;
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 4;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
 
 .dish-meta {
 	display: flex;
