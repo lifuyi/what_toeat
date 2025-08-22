@@ -1,0 +1,13 @@
+{
+  "name": "uniapp",
+  "version": "1.0.0",
+  "description": "本应用基于UniApp开发，支持多个平台部署：",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
