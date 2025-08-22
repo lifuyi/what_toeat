@@ -237,68 +237,103 @@ const DishRecommendationComponent = ({
 
   return (
     <>
-      <Card className="w-full h-fit backdrop-blur-sm border-2 shadow-xl transition-all duration-300 dark:bg-gradient-to-br dark:from-gray-800/90 dark:to-slate-800/90 dark:border-gray-600 bg-gradient-to-br from-white/90 to-purple-50/90 border-purple-200">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-center sm:text-left bg-clip-text text-transparent flex items-center gap-2 dark:bg-gradient-to-r dark:from-orange-400 dark:to-red-400 bg-gradient-to-r from-orange-600 to-red-600">
+      <Card className="w-full h-fit backdrop-blur-xl border-2 shadow-2xl transition-all duration-500 dark:bg-gradient-to-br dark:from-gray-800/95 dark:to-slate-800/95 dark:border-gray-600 bg-gradient-to-br from-white/95 to-purple-50/95 border-purple-300">
+        <CardHeader className="pb-5">
+          <CardTitle className="text-center sm:text-left bg-clip-text text-transparent flex items-center gap-3 dark:bg-gradient-to-r dark:from-orange-400 dark:to-red-400 bg-gradient-to-r from-orange-600 to-red-600">
             {currentSearchTerm ? (
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl animate-bounce">🔍</span>
-                  食材搜索结果
-                  <span className="text-sm bg-clip-text text-transparent dark:bg-gradient-to-r dark:from-emerald-400 dark:to-green-400 bg-gradient-to-r from-emerald-600 to-green-600">
+              <div className="flex flex-col gap-3 w-full">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl animate-bounce">🔍</span>
+                    <span className="text-2xl font-bold">食材搜索结果</span>
+                  </div>
+                  <span className="text-lg bg-clip-text text-transparent dark:bg-gradient-to-r dark:from-emerald-400 dark:to-green-400 bg-gradient-to-r from-emerald-600 to-green-600 px-3 py-1 rounded-full bg-white/30 dark:bg-black/20">
                     "{currentSearchTerm}"
                   </span>
                 </div>
                 {searchInfo && (
-                  <div className="flex flex-wrap gap-2 text-xs">
-                    <span className="dark:text-blue-400 text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-full">
-                      模式: {searchInfo.mode.toUpperCase()}
+                  <div className="flex flex-wrap gap-2.5">
+                    <span className="dark:text-blue-300 text-blue-700 bg-blue-100 dark:bg-blue-900/40 px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-1.5">
+                      <span>🔍</span>
+                      <span>模式: {searchInfo.mode.toUpperCase()}</span>
                     </span>
-                    <span className="dark:text-purple-400 text-purple-600 bg-purple-50 dark:bg-purple-900/20 px-2 py-1 rounded-full">
-                      结果: {searchInfo.total}条
+                    <span className="dark:text-purple-300 text-purple-700 bg-purple-100 dark:bg-purple-900/40 px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-1.5">
+                      <span>📊</span>
+                      <span>结果: {searchInfo.total}条</span>
                     </span>
                     {searchInfo.searchTime && (
-                      <span className="dark:text-orange-400 text-orange-600 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-full">
-                        耗时: {searchInfo.searchTime}
+                      <span className="dark:text-orange-300 text-orange-700 bg-orange-100 dark:bg-orange-900/40 px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-1.5">
+                        <span>⏱️</span>
+                        <span>耗时: {searchInfo.searchTime}</span>
                       </span>
                     )}
-                    <span className="dark:text-green-400 text-green-600 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded-full">
-                      配料: {searchInfo.ingredients.join(', ')}
+                    <span className="dark:text-green-300 text-green-700 bg-green-100 dark:bg-green-900/40 px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-1.5">
+                      <span>🥗</span>
+                      <span>配料: {searchInfo.ingredients.join(', ')}</span>
                     </span>
                   </div>
                 )}
               </div>
             ) : (
-              <>
-                <span className="text-2xl animate-bounce">🎯</span>
-                专属推荐菜品
-              </>
+              <div className="flex items-center gap-3">
+                <span className="text-3xl animate-bounce">🎯</span>
+                <span className="text-2xl font-bold">专属推荐菜品</span>
+                <div className="ml-2 flex items-center">
+                  <div className="w-2 h-2 bg-gradient-to-r from-pink-500 to-violet-500 rounded-full animate-ping mr-1"></div>
+                  <div className="w-2 h-2 bg-gradient-to-r from-pink-500 to-violet-500 rounded-full animate-ping mr-1 delay-100"></div>
+                  <div className="w-2 h-2 bg-gradient-to-r from-pink-500 to-violet-500 rounded-full animate-ping delay-200"></div>
+                </div>
+              </div>
             )}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="text-center space-y-4">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
-                <p className="text-muted-foreground">正在为您推荐美味菜品...</p>
+            <div className="flex items-center justify-center py-16">
+              <div className="text-center space-y-6">
+                <div className="relative">
+                  <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-r from-purple-500 to-pink-500 animate-spin"></div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-3xl">🍽️</span>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <p className="text-xl font-medium dark:text-gray-200 text-gray-700">正在为您推荐美味菜品...</p>
+                  <div className="flex justify-center gap-1">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-pink-500 rounded-full animate-bounce delay-100"></div>
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-200"></div>
+                  </div>
+                </div>
               </div>
             </div>
           ) : error ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="text-center space-y-4">
-                <div className="text-4xl">😅</div>
-                <p className="text-red-600">{error}</p>
-                <button 
-                  onClick={fetchRecommendedDishes}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                >
-                  重试
-                </button>
+            <div className="flex items-center justify-center py-16">
+              <div className="text-center space-y-6 max-w-md">
+                <div className="text-6xl animate-bounce">😅</div>
+                <div className="space-y-4">
+                  <p className="text-xl text-red-600 dark:text-red-400 font-medium">{error}</p>
+                  <button 
+                    onClick={fetchRecommendedDishes}
+                    className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-medium"
+                  >
+                    重试
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : recommendedDishes.length === 0 ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="text-center space-y-6 max-w-md">
+                <div className="text-6xl">🍽️</div>
+                <div className="space-y-3">
+                  <p className="text-xl font-medium dark:text-gray-200 text-gray-700">暂无匹配菜品</p>
+                  <p className="text-gray-500 dark:text-gray-400">尝试调整您的搜索条件或偏好设置</p>
+                </div>
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-5">
               {recommendedDishes.map((dish, index) => (
                 <DishCard
                   key={dish.id}

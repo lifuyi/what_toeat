@@ -27,7 +27,7 @@
 	/* 全局样式 */
 	page {
 		background: #ffffff;
-		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+		font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
 	}
 	
 	/* 通用工具类 */
@@ -94,5 +94,109 @@
 			transform: scale(1);
 			opacity: 1;
 		}
+	}
+	
+	/* 卡片样式 */
+	.card {
+		border-radius: 25rpx;
+		padding: 35rpx;
+		transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+		box-shadow: 0 8rpx 25rpx rgba(0, 0, 0, 0.12), 0 4rpx 10rpx rgba(0, 0, 0, 0.08);
+		margin-bottom: 25rpx;
+		position: relative;
+		overflow: hidden;
+		backdrop-filter: blur(10rpx);
+		border: 1rpx solid rgba(255, 255, 255, 0.2);
+		transform: translateY(0);
+	}
+	
+	.card:hover {
+		transform: translateY(-8rpx) scale(1.02);
+		box-shadow: 0 20rpx 40rpx rgba(0, 0, 0, 0.15), 0 8rpx 20rpx rgba(0, 0, 0, 0.1);
+		z-index: 2;
+	}
+	
+	.card:active {
+		transform: translateY(-4rpx) scale(0.98);
+		box-shadow: 0 12rpx 30rpx rgba(0, 0, 0, 0.18), 0 6rpx 15rpx rgba(0, 0, 0, 0.12);
+	}
+	
+	/* 按钮样式 */
+	.btn {
+		padding: 25rpx 35rpx;
+		border-radius: 25rpx;
+		border: none;
+		font-size: 30rpx;
+		font-weight: 600;
+		transition: all 0.3s ease;
+		position: relative;
+		overflow: hidden;
+		box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+		text-align: center;
+	}
+	
+	.btn:hover {
+		transform: translateY(-2rpx);
+		box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.15);
+	}
+	
+	.btn:active {
+		transform: translateY(0);
+		box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+	}
+	
+	.btn-primary {
+		background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+		color: white;
+	}
+	
+	.btn-secondary {
+		background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+		color: white;
+	}
+	
+	/* 标签样式 */
+	.tag {
+		padding: 8rpx 20rpx;
+		border-radius: 20rpx;
+		font-size: 22rpx;
+		font-weight: 500;
+		display: inline-block;
+		margin: 0 10rpx 10rpx 0;
+		transition: all 0.3s ease;
+	}
+	
+	.tag-primary {
+		background: rgba(99, 102, 241, 0.15);
+		color: #6366f1;
+		border: 1rpx solid rgba(99, 102, 241, 0.3);
+	}
+	
+	.tag-secondary {
+		background: rgba(16, 185, 129, 0.15);
+		color: #10b981;
+		border: 1rpx solid rgba(16, 185, 129, 0.3);
+	}
+	
+	.tag-accent {
+		background: rgba(245, 158, 11, 0.15);
+		color: #f59e0b;
+		border: 1rpx solid rgba(245, 158, 11, 0.3);
+	}
+	
+	/* 加载动画 */
+	.loading-spinner {
+		width: 40rpx;
+		height: 40rpx;
+		border: 3rpx solid rgba(255, 255, 255, 0.3);
+		border-top: 3rpx solid white;
+		border-radius: 50%;
+		animation: spin 1s linear infinite;
+		margin: 0 auto;
+	}
+	
+	@keyframes spin {
+		0% { transform: rotate(0deg); }
+		100% { transform: rotate(360deg); }
 	}
 </style>

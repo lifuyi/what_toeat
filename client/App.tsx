@@ -98,12 +98,12 @@ export default function App() {
         </Suspense>
 
         {/* 主要内容区域 */}
-        <div className="space-y-8 lg:space-y-12">
+        <div className="space-y-10 lg:space-y-14">
           {/* 控制面板和推荐区域 */}
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-10">
             {/* 雷达控制器 */}
             <div className="lg:col-span-2">
-              <Suspense fallback={<div className="h-96 bg-gradient-to-br from-white/90 to-blue-50/90 rounded-lg animate-pulse"></div>}>
+              <Suspense fallback={<div className="h-96 bg-gradient-to-br from-white/90 to-blue-50/90 rounded-xl animate-pulse shadow-lg"></div>}>
                 <RadarController
                   preferences={preferences}
                   onPreferencesChange={handlePreferencesChange}
@@ -113,7 +113,7 @@ export default function App() {
             
             {/* 菜品推荐 */}
             <div className="lg:col-span-3">
-              <Suspense fallback={<div className="h-96 bg-gradient-to-br from-white/90 to-purple-50/90 rounded-lg animate-pulse"></div>}>
+              <Suspense fallback={<div className="h-96 bg-gradient-to-br from-white/90 to-purple-50/90 rounded-xl animate-pulse shadow-lg"></div>}>
                 <DishRecommendation 
                   preferences={preferences} 
                   fetchTrigger={fetchTrigger}

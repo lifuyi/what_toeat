@@ -13,6 +13,8 @@ export default {
         'gradient': 'gradient 8s ease infinite',
         'pulse-color': 'pulse-color 3s ease-in-out infinite',
         'float': 'float 3s ease-in-out infinite',
+        'bounce-slow': 'bounce 2s infinite',
+        'ping-slow': 'ping 2s cubic-bezier(0,0,0.2,1) infinite',
       },
       keyframes: {
         gradient: {
