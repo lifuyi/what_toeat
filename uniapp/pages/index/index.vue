@@ -886,7 +886,6 @@ export default {
 	font-size: 36rpx;
 	font-weight: bold;
 	color: white;
-	text-shadow: 0 2rpx 4rpx rgba(0,0,0,0.3);
 }
 
 .subtitle {
@@ -945,7 +944,6 @@ export default {
 	font-weight: bold;
 	color: white;
 	margin-bottom: 30rpx;
-	text-shadow: 0 2rpx 4rpx rgba(0,0,0,0.3);
 }
 
 .section-subtitle {
@@ -1154,7 +1152,6 @@ export default {
 	padding: 80rpx;
 	color: white;
 	font-size: 28rpx;
-	text-shadow: 0 2rpx 4rpx rgba(0,0,0,0.3);
 	position: relative;
 	display: flex;
 	flex-direction: column;
@@ -1215,15 +1212,14 @@ export default {
 .dish-card {
 	animation: slideInCard 0.5s ease-out forwards;
 	opacity: 0;
-	border-radius: 20rpx;
-	padding: 25rpx;
+	border-radius: 25rpx;
+	padding: 30rpx;
 	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-	box-shadow: 0 6rpx 15rpx rgba(0, 0, 0, 0.1), 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
-	margin-bottom: 20rpx;
+	box-shadow: 0 10rpx 25rpx rgba(0, 0, 0, 0.1), 0 5rpx 10rpx rgba(0, 0, 0, 0.05);
+	margin-bottom: 25rpx;
 	position: relative;
 	overflow: hidden;
-	backdrop-filter: blur(5rpx);
-	border: 1rpx solid rgba(255, 255, 255, 0.2);
+	border: 2rpx solid rgba(255, 255, 255, 0.5);
 	transform: translateY(0);
 	display: flex;
 	flex-direction: column;
@@ -1241,7 +1237,7 @@ export default {
 @keyframes slideInCard {
 	from {
 		opacity: 0;
-		transform: translateY(50rpx) scale(0.9);
+		transform: translateY(50rpx) scale(0.95);
 	}
 	to {
 		opacity: 1;
@@ -1249,38 +1245,45 @@ export default {
 	}
 }
 
-.dish-card:nth-child(6n+1) {
-	background: linear-gradient(135deg, rgba(254, 243, 199, 0.95) 0%, rgba(253, 230, 138, 0.95) 50%, rgba(251, 191, 36, 0.95) 100%);
-}
-
-.dish-card:nth-child(6n+2) {
-	background: linear-gradient(135deg, rgba(221, 214, 254, 0.95) 0%, rgba(196, 181, 253, 0.95) 50%, rgba(167, 139, 250, 0.95) 100%);
-}
-
-.dish-card:nth-child(6n+3) {
-	background: linear-gradient(135deg, rgba(252, 231, 243, 0.95) 0%, rgba(251, 207, 232, 0.95) 50%, rgba(249, 168, 212, 0.95) 100%);
-}
-
-.dish-card:nth-child(6n+4) {
-	background: linear-gradient(135deg, rgba(209, 250, 229, 0.95) 0%, rgba(167, 243, 208, 0.95) 50%, rgba(110, 231, 183, 0.95) 100%);
-}
-
-.dish-card:nth-child(6n+5) {
-	background: linear-gradient(135deg, rgba(219, 234, 254, 0.95) 0%, rgba(191, 219, 254, 0.95) 50%, rgba(147, 197, 253, 0.95) 100%);
-}
-
-.dish-card:nth-child(6n+6) {
-	background: linear-gradient(135deg, rgba(254, 215, 215, 0.95) 0%, rgba(254, 178, 178, 0.95) 50%, rgba(252, 129, 129, 0.95) 100%);
-}
-
 .dish-card:hover {
-	transform: translateY(-4rpx);
-	box-shadow: 0 12rpx 30rpx rgba(0, 0, 0, 0.15), 0 6rpx 15rpx rgba(0, 0, 0, 0.1);
+	transform: translateY(-5rpx);
+	box-shadow: 0 15rpx 35rpx rgba(0, 0, 0, 0.15), 0 8rpx 20rpx rgba(0, 0, 0, 0.1);
 }
 
 .dish-card:active {
 	transform: translateY(-2rpx);
-	box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.18), 0 4rpx 10rpx rgba(0, 0, 0, 0.12);
+	box-shadow: 0 10rpx 25rpx rgba(0, 0, 0, 0.18), 0 5rpx 15rpx rgba(0, 0, 0, 0.12);
+}
+
+/* Colorful gradient backgrounds for different cards */
+.dish-card:nth-child(6n+1) {
+	background: linear-gradient(135deg, rgba(255, 235, 156, 0.95) 0%, rgba(255, 215, 75, 0.95) 50%, rgba(255, 180, 0, 0.95) 100%);
+	box-shadow: 0 10rpx 25rpx rgba(255, 180, 0, 0.2), 0 5rpx 10rpx rgba(0, 0, 0, 0.05);
+}
+
+.dish-card:nth-child(6n+2) {
+	background: linear-gradient(135deg, rgba(209, 196, 255, 0.95) 0%, rgba(162, 128, 255, 0.95) 50%, rgba(125, 75, 255, 0.95) 100%);
+	box-shadow: 0 10rpx 25rpx rgba(162, 128, 255, 0.2), 0 5rpx 10rpx rgba(0, 0, 0, 0.05);
+}
+
+.dish-card:nth-child(6n+3) {
+	background: linear-gradient(135deg, rgba(255, 185, 215, 0.95) 0%, rgba(255, 125, 180, 0.95) 50%, rgba(255, 75, 150, 0.95) 100%);
+	box-shadow: 0 10rpx 25rpx rgba(255, 125, 180, 0.2), 0 5rpx 10rpx rgba(0, 0, 0, 0.05);
+}
+
+.dish-card:nth-child(6n+4) {
+	background: linear-gradient(135deg, rgba(165, 255, 205, 0.95) 0%, rgba(75, 240, 175, 0.95) 50%, rgba(0, 220, 150, 0.95) 100%);
+	box-shadow: 0 10rpx 25rpx rgba(75, 240, 175, 0.2), 0 5rpx 10rpx rgba(0, 0, 0, 0.05);
+}
+
+.dish-card:nth-child(6n+5) {
+	background: linear-gradient(135deg, rgba(175, 225, 255, 0.95) 0%, rgba(100, 190, 255, 0.95) 50%, rgba(50, 160, 255, 0.95) 100%);
+	box-shadow: 0 10rpx 25rpx rgba(100, 190, 255, 0.2), 0 5rpx 10rpx rgba(0, 0, 0, 0.05);
+}
+
+.dish-card:nth-child(6n+6) {
+	background: linear-gradient(135deg, rgba(255, 195, 195, 0.95) 0%, rgba(255, 135, 135, 0.95) 50%, rgba(255, 95, 95, 0.95) 100%);
+	box-shadow: 0 10rpx 25rpx rgba(255, 135, 135, 0.2), 0 5rpx 10rpx rgba(0, 0, 0, 0.05);
 }
 
 .dish-header {
@@ -1299,17 +1302,16 @@ export default {
 	bottom: -10rpx;
 	left: 0;
 	width: 60rpx;
-	height: 3rpx;
+	height: 4rpx;
 	background: linear-gradient(90deg, #6366f1, #8b5cf6);
 	border-radius: 2rpx;
 	z-index: -1;
 }
 
 .dish-name {
-	font-size: 32rpx;
-	font-weight: 700;
-	color: #1e293b;
-	text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.1);
+	font-size: 36rpx;
+	font-weight: 800;
+	color: #0f172a;
 	letter-spacing: 0.5rpx;
 	line-height: 1.3;
 	flex: 1;
@@ -1318,16 +1320,22 @@ export default {
 }
 
 .match-score {
-	background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-	padding: 10rpx 18rpx;
-	border-radius: 25rpx;
-	box-shadow: 0 4rpx 12rpx rgba(16, 185, 129, 0.3);
+	background: linear-gradient(135deg, #34d399 0%, #10b981 50%, #059669 100%);
+	padding: 12rpx 20rpx;
+	border-radius: 30rpx;
+	box-shadow: 0 6rpx 15rpx rgba(16, 185, 129, 0.5);
 	position: relative;
 	overflow: hidden;
 	align-self: flex-start;
-	min-width: 120rpx;
+	min-width: 130rpx;
 	text-align: center;
 	z-index: 1;
+	transform: scale(1);
+	transition: transform 0.2s ease;
+}
+
+.match-score:hover {
+	transform: scale(1.05);
 }
 
 .match-score::before {
@@ -1337,7 +1345,7 @@ export default {
 	left: -100%;
 	width: 100%;
 	height: 100%;
-	background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+	background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
 	animation: shimmer 2s infinite;
 	z-index: -1;
 }
@@ -1348,28 +1356,27 @@ export default {
 }
 
 .score-text {
-	font-size: 24rpx;
+	font-size: 26rpx;
 	color: white;
-	font-weight: 700;
-	text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.2);
+	font-weight: 800;
 	position: relative;
 	z-index: 1;
+	letter-spacing: 0.5rpx;
 }
 
 .dish-description {
 	font-size: 28rpx;
-	color: #475569;
+	color: #334155;
 	margin-bottom: 25rpx;
-	line-height: 1.4;
+	line-height: 1.5;
 	display: -webkit-box;
 	-webkit-box-orient: vertical;
 	-webkit-line-clamp: 3;
 	overflow: hidden;
-	text-overflow: ellipsis;
-	font-weight: 400;
-	text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.05);
+	font-weight: 500;
 	flex: 1;
 	word-break: break-word;
+	letter-spacing: 0.2rpx;
 }
 
 .dish-meta {
@@ -1377,16 +1384,17 @@ export default {
 	gap: 35rpx;
 	margin-bottom: 25rpx;
 	padding: 15rpx 20rpx;
-	background: rgba(255, 255, 255, 0.4);
+	background: rgba(255, 255, 255, 0.8);
 	border-radius: 15rpx;
-	backdrop-filter: blur(5rpx);
 	flex-wrap: wrap;
+	border: 1rpx solid rgba(0, 0, 0, 0.05);
+	box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.03);
 }
 
 .meta-item {
 	font-size: 26rpx;
-	color: #374151;
-	font-weight: 500;
+	color: #1e293b;
+	font-weight: 600;
 	display: flex;
 	align-items: center;
 	gap: 8rpx;
@@ -1395,82 +1403,64 @@ export default {
 .dish-cid-tags {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 12rpx;
+	gap: 15rpx;
 	margin-top: 20rpx;
 	padding-top: 20rpx;
-	border-top: 2rpx solid rgba(255, 255, 255, 0.3);
+	border-top: 2rpx solid rgba(0, 0, 0, 0.05);
 	min-height: 60rpx;
 }
 
 .cid-tag {
-	padding: 10rpx 22rpx;
-	background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
-	border-radius: 50rpx;
-	font-size: 22rpx;
+	padding: 12rpx 25rpx;
+	background: linear-gradient(135deg, #3b82f6, #6366f1);
+	border-radius: 10rpx;
+	font-size: 24rpx;
 	color: white;
-	font-weight: 600;
-	box-shadow: 0 4rpx 12rpx rgba(139, 92, 246, 0.4);
+	font-weight: 700;
 	transition: all 0.3s ease;
 	position: relative;
 	overflow: hidden;
 	transform: scale(1);
-	text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.2);
-	border: 1rpx solid rgba(255, 255, 255, 0.3);
+	letter-spacing: 0.5rpx;
 }
 
 .cid-tag:hover {
 	transform: scale(1.05);
-	box-shadow: 0 6rpx 16rpx rgba(139, 92, 246, 0.5);
+	box-shadow: 0 8rpx 20rpx rgba(139, 92, 246, 0.6);
 }
 
 /* High match score styling */
 .dish-card.high-match {
-	border: 2rpx solid rgba(16, 185, 129, 0.7);
-	box-shadow: 0 8rpx 25rpx rgba(16, 185, 129, 0.2), 0 4rpx 10rpx rgba(0, 0, 0, 0.08);
+	border: 3rpx solid rgba(16, 185, 129, 0.9);
+	box-shadow: 0 12rpx 30rpx rgba(16, 185, 129, 0.4), 0 6rpx 15rpx rgba(0, 0, 0, 0.1);
 	position: relative;
-	contain: layout style;
 }
 
 .dish-card.high-match::before {
-	content: '';
+	content: '🔥';
 	position: absolute;
 	top: 15rpx;
 	right: 15rpx;
-	font-size: 20rpx;
+	font-size: 24rpx;
 	z-index: 2;
-	background: linear-gradient(135deg, #f59e0b, #f97316);
-	padding: 6rpx 12rpx;
-	border-radius: 15rpx;
-	color: white;
-	font-weight: bold;
-	box-shadow: 0 2rpx 8rpx rgba(245, 158, 11, 0.4);
-	contain: layout style;
 }
 
 /* Medium match score styling */
 .dish-card.medium-match {
-	border: 2rpx solid rgba(245, 158, 11, 0.7);
-	box-shadow: 0 8rpx 25rpx rgba(245, 158, 11, 0.2), 0 4rpx 10rpx rgba(0, 0, 0, 0.08);
-	contain: layout style;
+	border: 3rpx solid rgba(245, 158, 11, 0.9);
+	box-shadow: 0 12rpx 30rpx rgba(245, 158, 11, 0.4), 0 6rpx 15rpx rgba(0, 0, 0, 0.1);
 }
 
 .dish-card.medium-match::before {
-	content: '⭐ 精选';
+	content: '⭐';
 	position: absolute;
 	top: 15rpx;
 	right: 15rpx;
-	font-size: 20rpx;
+	font-size: 24rpx;
 	z-index: 2;
-	background: linear-gradient(135deg, #10b981, #059669);
-	padding: 6rpx 12rpx;
-	border-radius: 15rpx;
-	color: white;
-	font-weight: bold;
-	box-shadow: 0 2rpx 8rpx rgba(16, 185, 129, 0.4);
-	contain: layout style;
 }
 
-/* Enhanced glassmorphism effect */
+/* Subtle overlay for depth */
 .dish-card::after {
 	content: '';
 	position: absolute;
@@ -1520,9 +1510,8 @@ export default {
 	}
 	
 	.favorite-card {
-	background: linear-gradient(135deg, rgba(255, 100, 100, 0.25) 0%, rgba(255, 150, 150, 0.25) 100%);
-	border: 2rpx solid rgba(255, 100, 100, 0.7);
-	box-shadow: 0 8rpx 25rpx rgba(255, 100, 100, 0.2), 0 4rpx 10rpx rgba(0, 0, 0, 0.08);
+	border: 3rpx solid rgba(255, 100, 100, 0.9);
+	box-shadow: 0 12rpx 30rpx rgba(255, 100, 100, 0.4), 0 6rpx 15rpx rgba(0, 0, 0, 0.1);
 	position: relative;
 	overflow: hidden;
 	contain: layout style;
@@ -1533,21 +1522,20 @@ export default {
 	position: absolute;
 	top: 15rpx;
 	right: 15rpx;
-	font-size: 24rpx;
+	font-size: 28rpx;
 	z-index: 2;
-	background: rgba(255, 255, 255, 0.3);
-	width: 40rpx;
-	height: 40rpx;
+	background: rgba(255, 255, 255, 0.5);
+	width: 45rpx;
+	height: 45rpx;
 	border-radius: 50%;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+	box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.15);
 }
 
 .favorite-card .dish-name {
-	color: #333;
-	text-shadow: 0 1rpx 2rpx rgba(255, 255, 255, 0.5);
+	color: #0f172a;
 }
 	
 	.section-header {
