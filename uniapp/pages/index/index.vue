@@ -1403,32 +1403,24 @@ export default {
 }
 
 .cid-tag {
-	padding: 8rpx 18rpx;
-	background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-	border-radius: 20rpx;
+	padding: 10rpx 22rpx;
+	background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+	border-radius: 50rpx;
 	font-size: 22rpx;
 	color: white;
-	font-weight: 500;
-	box-shadow: 0 2rpx 8rpx rgba(99, 102, 241, 0.3);
+	font-weight: 600;
+	box-shadow: 0 4rpx 12rpx rgba(139, 92, 246, 0.4);
 	transition: all 0.3s ease;
 	position: relative;
 	overflow: hidden;
+	transform: scale(1);
+	text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.2);
+	border: 1rpx solid rgba(255, 255, 255, 0.3);
 }
 
-.cid-tag::before {
-	content: '';
-	position: absolute;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 100%);
-	opacity: 0;
-	transition: opacity 0.3s ease;
-}
-
-.cid-tag:hover::before {
-	opacity: 1;
+.cid-tag:hover {
+	transform: scale(1.05);
+	box-shadow: 0 6rpx 16rpx rgba(139, 92, 246, 0.5);
 }
 
 /* High match score styling */
@@ -1440,7 +1432,7 @@ export default {
 }
 
 .dish-card.high-match::before {
-	content: '🏆 推荐';
+	content: '';
 	position: absolute;
 	top: 15rpx;
 	right: 15rpx;
