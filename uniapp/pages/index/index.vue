@@ -173,9 +173,6 @@
 					</view>
 				</view>
 			</view>
-			<view v-else class="no-favorites">
-				<text class="no-favorites-text">还没有收藏的菜品，快去发现你喜欢的美食吧！</text>
-			</view>
 		</view>
 	</view>
 </template>
@@ -1499,12 +1496,12 @@ export default {
 	flex: 1;
 	margin-right: 15rpx;
 	word-break: break-word;
-	background: linear-gradient(90deg, #6366f1, #8b5cf6);
+	background: linear-gradient(45deg, #6366f1, #8b5cf6);
 	-webkit-background-clip: text;
 	-webkit-text-fill-color: transparent;
 	background-clip: text;
-	/* Add text shadow for better readability */
-	text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.1);
+	/* Add text shadow for better readability 
+	text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.1);*/
 }
 
 .match-score {
@@ -1568,8 +1565,9 @@ export default {
 }
 
 .dish-description {
-	font-size: 28rpx;
+	font-size: 30rpx;
 	color: #334155;
+	margin-top: 10rpx;
 	margin-bottom: 25rpx;
 	line-height: 1.5;
 	display: -webkit-box;
@@ -1580,7 +1578,6 @@ export default {
 	flex: 1;
 	word-break: break-word;
 	letter-spacing: 0.2rpx;
-	transition: color 0.3s ease;
 	padding: 0 30rpx;
 }
 
