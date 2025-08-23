@@ -38,27 +38,45 @@
 				></canvas>
 				
 				<view class="preset-buttons-area">
-					<text class="preset-subtitle">🎯 快速预设，从左起：健康、辣食、方便，随机</text>
-					<view class="preset-row">
+					<text class="preset-subtitle">🎯 快速预设配置</text>
+					<view class="preset-grid">
 						<view 
-							class="preset-icon-btn"
+							class="preset-btn preset-healthy"
 							@tap="selectHealthyPreset"
 						>
 							<text class="preset-emoji">🥗</text>
 						</view>
 						<view 
-							class="preset-icon-btn"
+							class="preset-btn preset-easy"
+							@tap="selectEasyPreset"
+						>
+							<text class="preset-emoji">⚡</text>
+						</view>
+						<view 
+							class="preset-btn preset-vegetarian"
+							@tap="selectVegetarianPreset"
+						>
+							<text class="preset-emoji">🥬</text>
+						</view>
+						<view 
+							class="preset-btn preset-spicy"
 							@tap="selectSpicyPreset"
 						>
 							<text class="preset-emoji">🌶️</text>
 						</view>
 						<view 
-							class="preset-icon-btn"
-							@tap="selectEasyPreset"
+							class="preset-btn preset-gourmet"
+							@tap="selectGourmetPreset"
 						>
 							<text class="preset-emoji">👨‍🍳</text>
 						</view>
-						<view class="preset-icon-btn preset-random" @tap="randomRecommend">
+						<view 
+							class="preset-btn preset-balanced"
+							@tap="selectBalancedPreset"
+						>
+							<text class="preset-emoji">⚖️</text>
+						</view>
+						<view class="preset-btn preset-random" @tap="randomRecommend">
 							<text class="preset-emoji">🎲</text>
 						</view>
 					</view>
@@ -264,8 +282,8 @@ export default {
 		},
 		selectHealthyPreset() {
 			this.preferences = {
-				healthy: 9,
-				difficulty: 2,
+				healthy: 10,
+				difficulty: 1,
 				vegetarian: 8,
 				spicy: 2,
 				sweetness: 3
@@ -275,16 +293,16 @@ export default {
 			this.loadFavorites();
 			this.drawRadarChart();
 			uni.showToast({
-				title: '已选择健康模式',
+				title: '已选择健康达人模式',
 				icon: 'success'
 			});
 		},
 		selectSpicyPreset() {
 			this.preferences = {
-				healthy: 6,
+				healthy: 4,
 				difficulty: 3,
-				vegetarian: 4,
-				spicy: 9,
+				vegetarian: 3,
+				spicy: 10,
 				sweetness: 2
 			};
 			uni.removeStorageSync(CONFIG.STORAGE_KEYS.INGREDIENT_SEARCH);
@@ -292,7 +310,7 @@ export default {
 			this.loadFavorites();
 			this.drawRadarChart();
 			uni.showToast({
-				title: '已选择辣味模式',
+				title: '已选择重口味模式',
 				icon: 'success'
 			});
 		},
@@ -309,7 +327,58 @@ export default {
 			this.loadFavorites();
 			this.drawRadarChart();
 			uni.showToast({
-				title: '已选择简单模式',
+				title: '已选择简单易做模式',
+				icon: 'success'
+			});
+		},
+		selectVegetarianPreset() {
+			this.preferences = {
+				healthy: 9,
+				difficulty: 2,
+				vegetarian: 10,
+				spicy: 3,
+				sweetness: 4
+			};
+			uni.removeStorageSync(CONFIG.STORAGE_KEYS.INGREDIENT_SEARCH);
+			this.fetchRecommendations();
+			this.loadFavorites();
+			this.drawRadarChart();
+			uni.showToast({
+				title: '已选择素食主义模式',
+				icon: 'success'
+			});
+		},
+		selectGourmetPreset() {
+			this.preferences = {
+				healthy: 7,
+				difficulty: 3,
+				vegetarian: 4,
+				spicy: 5,
+				sweetness: 6
+			};
+			uni.removeStorageSync(CONFIG.STORAGE_KEYS.INGREDIENT_SEARCH);
+			this.fetchRecommendations();
+			this.loadFavorites();
+			this.drawRadarChart();
+			uni.showToast({
+				title: '已选择精致烹饪模式',
+				icon: 'success'
+			});
+		},
+		selectBalancedPreset() {
+			this.preferences = {
+				healthy: 5,
+				difficulty: 2,
+				vegetarian: 5,
+				spicy: 5,
+				sweetness: 5
+			};
+			uni.removeStorageSync(CONFIG.STORAGE_KEYS.INGREDIENT_SEARCH);
+			this.fetchRecommendations();
+			this.loadFavorites();
+			this.drawRadarChart();
+			uni.showToast({
+				title: '已选择均衡口味模式',
 				icon: 'success'
 			});
 		},
@@ -961,28 +1030,29 @@ export default {
 	margin: 30rpx 0;
 }
 
-.preset-row {
-	display: flex;
-	justify-content: space-around;
-	align-items: center;
-	gap: 20rpx;
+.preset-grid {
+	display: grid;
+	grid-template-columns: repeat(7, 1fr);
+	gap: 10rpx;
 	padding: 0 20rpx;
 }
 
-.preset-icon-btn {
-	width: 80rpx;
-	height: 80rpx;
+.preset-btn {
 	background: linear-gradient(135deg, #fbbf24 40%, #f59e0b);
 	border: 2rpx solid #f59e0b;
 	border-radius: 12rpx;
 	display: flex;
+	flex-direction: column;
 	align-items: center;
 	justify-content: center;
 	transition: all 0.3s ease;
 	box-shadow: 0 4rpx 12rpx rgba(245, 158, 11, 0.3);
+	padding: 20rpx 10rpx;
+	height: 40rpx; 
+	width: 50rpx;
 }
 
-.preset-icon-btn:active {
+.preset-btn:active {
 	transform: scale(0.95);
 	background: linear-gradient(135deg, #f59e0b, #d97706);
 	border-color: #d97706;
@@ -991,10 +1061,94 @@ export default {
 
 .preset-emoji {
 	font-size: 36rpx;
+	/*margin-bottom: 10rpx;
+	animation: bounce 1s ease-in-out infinite;*/
+}
+
+.preset-name {
+	font-size: 24rpx;
+	font-weight: bold;
+	color: white;
+	margin-bottom: 5rpx;
+}
+
+.preset-desc {
+	font-size: 20rpx;
+	color: rgba(255, 255, 255, 0.9);
+	text-align: center;
+	line-height: 1.2;
+}
+
+
+
+.preset-healthy {
+	background: linear-gradient(135deg, #10b981 40%, #059669);
+	border: 2rpx solid #059669;
+}
+
+.preset-healthy:active {
+	background: linear-gradient(135deg, #059669, #047857);
+	border-color: #047857;
+}
+
+.preset-easy {
+	background: linear-gradient(135deg, #fbbf24 40%, #f59e0b);
+	border: 2rpx solid #f59e0b;
+}
+
+.preset-easy:active {
+	background: linear-gradient(135deg, #f59e0b, #d97706);
+	border-color: #d97706;
+}
+
+.preset-vegetarian {
+	background: linear-gradient(135deg, #84cc16 40%, #65a30d);
+	border: 2rpx solid #65a30d;
+}
+
+.preset-vegetarian:active {
+	background: linear-gradient(135deg, #65a30d, #4d7c0f);
+	border-color: #4d7c0f;
+}
+
+.preset-spicy {
+	background: linear-gradient(135deg, #ef4444 40%, #dc2626);
+	border: 2rpx solid #dc2626;
+}
+
+.preset-spicy:active {
+	background: linear-gradient(135deg, #dc2626, #b91c1c);
+	border-color: #b91c1c;
+}
+
+.preset-gourmet {
+	background: linear-gradient(135deg, #8b5cf6 40%, #7c3aed);
+	border: 2rpx solid #7c3aed;
+}
+
+.preset-gourmet:active {
+	background: linear-gradient(135deg, #7c3aed, #6d28d9);
+	border-color: #6d28d9;
+}
+
+.preset-balanced {
+	background: linear-gradient(135deg, #0ea5e9 40%, #0284c7);
+	border: 2rpx solid #0284c7;
+}
+
+.preset-balanced:active {
+	background: linear-gradient(135deg, #0284c7, #0369a1);
+	border-color: #0369a1;
 }
 
 .preset-random {
-	background: linear-gradient(45deg, #8b5cf6, #6366f1);
+	background: linear-gradient(135deg, #8b5cf6 40%, #7c3aed);
+	border: 2rpx solid #7c3aed;
+}
+
+.preset-random:active {
+	background: linear-gradient(135deg, #7c3aed, #6d28d9);
+	border-color: #6d28d9;
 }
 
 
@@ -1213,7 +1367,7 @@ export default {
 	animation: slideInCard 0.5s ease-out forwards;
 	opacity: 0;
 	border-radius: 25rpx;
-	padding: 30rpx;
+	padding: 0;
 	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 	box-shadow: 0 10rpx 25rpx rgba(0, 0, 0, 0.1), 0 5rpx 10rpx rgba(0, 0, 0, 0.05);
 	margin-bottom: 25rpx;
@@ -1225,6 +1379,8 @@ export default {
 	flex-direction: column;
 	min-height: 280rpx;
 	contain: layout style;
+	cursor: pointer;
+	background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
 }
 
 .dish-card:nth-child(1) { animation-delay: 0.1s; }
@@ -1248,42 +1404,66 @@ export default {
 .dish-card:hover {
 	transform: translateY(-5rpx);
 	box-shadow: 0 15rpx 35rpx rgba(0, 0, 0, 0.15), 0 8rpx 20rpx rgba(0, 0, 0, 0.1);
+	background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+	/* Add glow effect on hover */
+	filter: drop-shadow(0 0 15rpx rgba(99, 102, 241, 0.3));
 }
 
 .dish-card:active {
 	transform: translateY(-2rpx);
 	box-shadow: 0 10rpx 25rpx rgba(0, 0, 0, 0.18), 0 5rpx 15rpx rgba(0, 0, 0, 0.12);
+	background: linear-gradient(135deg, #f0f2f5 0%, #f8f9fa 100%);
+	/* Enhance active state */
+	filter: drop-shadow(0 0 20rpx rgba(99, 102, 241, 0.5));
 }
 
-/* Colorful gradient backgrounds for different cards */
+/* Colorful gradient backgrounds for different cards with enhanced styling */
 .dish-card:nth-child(6n+1) {
 	background: linear-gradient(135deg, rgba(255, 235, 156, 0.95) 0%, rgba(255, 215, 75, 0.95) 50%, rgba(255, 180, 0, 0.95) 100%);
 	box-shadow: 0 10rpx 25rpx rgba(255, 180, 0, 0.2), 0 5rpx 10rpx rgba(0, 0, 0, 0.05);
+	border: 2rpx solid rgba(255, 180, 0, 0.3);
+	/* Add glow effect */
+	filter: drop-shadow(0 0 15rpx rgba(255, 180, 0, 0.3));
 }
 
 .dish-card:nth-child(6n+2) {
 	background: linear-gradient(135deg, rgba(209, 196, 255, 0.95) 0%, rgba(162, 128, 255, 0.95) 50%, rgba(125, 75, 255, 0.95) 100%);
 	box-shadow: 0 10rpx 25rpx rgba(162, 128, 255, 0.2), 0 5rpx 10rpx rgba(0, 0, 0, 0.05);
+	border: 2rpx solid rgba(162, 128, 255, 0.3);
+	/* Add glow effect */
+	filter: drop-shadow(0 0 15rpx rgba(162, 128, 255, 0.3));
 }
 
 .dish-card:nth-child(6n+3) {
 	background: linear-gradient(135deg, rgba(255, 185, 215, 0.95) 0%, rgba(255, 125, 180, 0.95) 50%, rgba(255, 75, 150, 0.95) 100%);
 	box-shadow: 0 10rpx 25rpx rgba(255, 125, 180, 0.2), 0 5rpx 10rpx rgba(0, 0, 0, 0.05);
+	border: 2rpx solid rgba(255, 125, 180, 0.3);
+	/* Add glow effect */
+	filter: drop-shadow(0 0 15rpx rgba(255, 125, 180, 0.3));
 }
 
 .dish-card:nth-child(6n+4) {
 	background: linear-gradient(135deg, rgba(165, 255, 205, 0.95) 0%, rgba(75, 240, 175, 0.95) 50%, rgba(0, 220, 150, 0.95) 100%);
 	box-shadow: 0 10rpx 25rpx rgba(75, 240, 175, 0.2), 0 5rpx 10rpx rgba(0, 0, 0, 0.05);
+	border: 2rpx solid rgba(75, 240, 175, 0.3);
+	/* Add glow effect */
+	filter: drop-shadow(0 0 15rpx rgba(75, 240, 175, 0.3));
 }
 
 .dish-card:nth-child(6n+5) {
 	background: linear-gradient(135deg, rgba(175, 225, 255, 0.95) 0%, rgba(100, 190, 255, 0.95) 50%, rgba(50, 160, 255, 0.95) 100%);
 	box-shadow: 0 10rpx 25rpx rgba(100, 190, 255, 0.2), 0 5rpx 10rpx rgba(0, 0, 0, 0.05);
+	border: 2rpx solid rgba(100, 190, 255, 0.3);
+	/* Add glow effect */
+	filter: drop-shadow(0 0 15rpx rgba(100, 190, 255, 0.3));
 }
 
 .dish-card:nth-child(6n+6) {
 	background: linear-gradient(135deg, rgba(255, 195, 195, 0.95) 0%, rgba(255, 135, 135, 0.95) 50%, rgba(255, 95, 95, 0.95) 100%);
 	box-shadow: 0 10rpx 25rpx rgba(255, 135, 135, 0.2), 0 5rpx 10rpx rgba(0, 0, 0, 0.05);
+	border: 2rpx solid rgba(255, 135, 135, 0.3);
+	/* Add glow effect */
+	filter: drop-shadow(0 0 15rpx rgba(255, 135, 135, 0.3));
 }
 
 .dish-header {
@@ -1294,6 +1474,8 @@ export default {
 	position: relative;
 	z-index: 1;
 	min-height: 50rpx;
+	gap: 15rpx;
+	padding: 30rpx 30rpx 0 30rpx;
 }
 
 .dish-header::after {
@@ -1317,6 +1499,12 @@ export default {
 	flex: 1;
 	margin-right: 15rpx;
 	word-break: break-word;
+	background: linear-gradient(90deg, #6366f1, #8b5cf6);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+	/* Add text shadow for better readability */
+	text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.1);
 }
 
 .match-score {
@@ -1331,7 +1519,10 @@ export default {
 	text-align: center;
 	z-index: 1;
 	transform: scale(1);
-	transition: transform 0.2s ease;
+	transition: all 0.3s ease;
+	animation: pulse 2s infinite;
+	/* Add border for better visibility */
+	border: 2rpx solid rgba(255, 255, 255, 0.5);
 }
 
 .match-score:hover {
@@ -1353,6 +1544,18 @@ export default {
 @keyframes shimmer {
 	0% { left: -100%; }
 	100% { left: 100%; }
+}
+
+@keyframes pulse {
+	0% { transform: scale(1); box-shadow: 0 6rpx 15rpx rgba(16, 185, 129, 0.5); }
+	50% { transform: scale(1.05); box-shadow: 0 8rpx 20rpx rgba(16, 185, 129, 0.7); }
+	100% { transform: scale(1); box-shadow: 0 6rpx 15rpx rgba(16, 185, 129, 0.5); }
+}
+
+@keyframes float {
+	0% { transform: translateY(0) scale(1); }
+	50% { transform: translateY(-5rpx) scale(1.05); }
+	100% { transform: translateY(0) scale(1); }
 }
 
 .score-text {
@@ -1377,6 +1580,8 @@ export default {
 	flex: 1;
 	word-break: break-word;
 	letter-spacing: 0.2rpx;
+	transition: color 0.3s ease;
+	padding: 0 30rpx;
 }
 
 .dish-meta {
@@ -1389,6 +1594,8 @@ export default {
 	flex-wrap: wrap;
 	border: 1rpx solid rgba(0, 0, 0, 0.05);
 	box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.03);
+	transition: all 0.3s ease;
+	margin: 0 30rpx 25rpx 30rpx;
 }
 
 .meta-item {
@@ -1408,6 +1615,7 @@ export default {
 	padding-top: 20rpx;
 	border-top: 2rpx solid rgba(0, 0, 0, 0.05);
 	min-height: 60rpx;
+	padding: 0 30rpx 30rpx 30rpx;
 }
 
 .cid-tag {
@@ -1422,11 +1630,17 @@ export default {
 	overflow: hidden;
 	transform: scale(1);
 	letter-spacing: 0.5rpx;
+	box-shadow: 0 4rpx 8rpx rgba(59, 130, 246, 0.3);
+	animation: float 3s ease-in-out infinite;
+	/* Add hover effect */
+	cursor: pointer;
 }
 
 .cid-tag:hover {
 	transform: scale(1.05);
 	box-shadow: 0 8rpx 20rpx rgba(139, 92, 246, 0.6);
+	/* Enhance hover effect */
+	filter: brightness(1.1);
 }
 
 /* High match score styling */
